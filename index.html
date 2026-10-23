@@ -1938,7 +1938,7 @@ function spNext(n){spIndex=(spIndex+n+spSongs.length)%spSongs.length;spProgress=
   // Old Korean narrative belongs to the removed DOHOON storyline: do not show untranslated remnants.
   if(/[가-힣]/.test(t)){
    if(t.length>110)return '（原版旧剧情已隐藏，等待添加 USER × 申惟的新内容）';
-   t=t.replace(/[가-힣]+(?:\s+[가-힣]+)*/g,'（旧内容待替换）');
+   t=t.replace(/[가-힣]+(?:\s+[가-힣]+)*/g,'');
   }
   return t;
  }
@@ -2195,7 +2195,7 @@ function changePlayerName(){
 #shinyu-call-overlay .caller-photo{width:108px;height:108px;border-radius:55px;background:linear-gradient(140deg,#b2bbc7,#71869b);display:grid;place-items:center;font-size:49px;margin:0 auto 16px;box-shadow:0 8px 28px #0004}
 #shinyu-call-overlay .call-buttons{width:100%;display:flex;justify-content:space-around;align-items:center}
 #shinyu-call-overlay .call-action{border:0;border-radius:50%;width:76px;height:76px;color:white;font-size:30px;display:grid;place-items:center;cursor:pointer}
-#shinyu-call-overlay .call-action.decline{background:#ef4d50}#shinyu-call-overlay .call-action.accept{background:#32c85a}
+#shinyu-call-overlay .call-action svg{display:block;width:34px;height:34px;fill:currentColor}#shinyu-call-overlay .call-action.decline svg{transform:rotate(135deg)}#shinyu-call-overlay .call-action.decline{background:#ef4d50}#shinyu-call-overlay .call-action.accept{background:#32c85a}
 #shinyu-call-overlay .call-label{font-size:13px;margin-top:10px;color:#e6e6e6}
 #shinyu-call-overlay .call-control{border:0;background:#ffffff22;color:white;border-radius:50%;width:67px;height:67px;font-size:24px;cursor:pointer}
 #shinyu-call-overlay .call-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 32px;margin:20px auto 45px}
@@ -2212,6 +2212,31 @@ function changePlayerName(){
  const ACCEL_BASE=Date.parse('2026-10-24T17:07:00');
  const TARGET=Date.parse('2026-10-24T19:30:00');
  const TOTAL=10;
+ // Audio files are loaded from the audio/ folder on the same GitHub Pages site.
+ const ringtone=new Audio('audio/shinyu_ringtone.mp3');
+ const callVoice=new Audio('audio/shinyu_call_voice.mp3');
+ callVoice.preload='auto';
+ callVoice.loop=false;
+ let voiceStarted=false;
+ callVoice.addEventListener('ended',()=>{const c=readCall();if(c?.status==='active')window.shinyuEndCall()});
+ function stopVoice(){callVoice.pause();try{callVoice.currentTime=0}catch(e){}voiceStarted=false}
+ function startVoice(){const c=readCall();if(c?.status!=='active'||voiceStarted)return;voiceStarted=true;callVoice.play().catch(()=>{voiceStarted=false});}
+ ringtone.loop=true;
+ ringtone.preload='auto';
+ let ringWanted=false;
+ function stopRing(){ringWanted=false;ringtone.pause();try{ringtone.currentTime=0}catch(e){}}
+ function syncRing(){
+  const c=readCall();const shouldRing=!!c&&c.status==='ringing';
+  if(!shouldRing){if(ringWanted||!ringtone.paused)stopRing();return}
+  ringWanted=true;
+  if(ringtone.paused)ringtone.play().catch(()=>{});
+ }
+ // Mobile Safari can block audio until a user gesture; retry when tapped.
+ ['pointerdown','touchstart','keydown'].forEach(evt=>document.addEventListener(evt,()=>{
+  if(ringWanted&&ringtone.paused)ringtone.play().catch(()=>{});
+  if(readCall()?.status==='active'&&callVoice.paused)startVoice();
+ },{passive:true}));
+
  function getStart(){const n=Number(localStorage.getItem(START));return Number.isFinite(n)&&n>0?n:0}
  function readCall(){try{return JSON.parse(localStorage.getItem(CALL)||'null')}catch(e){return null}}
  function saveCall(c){localStorage.setItem(CALL,JSON.stringify(c))}
@@ -2244,13 +2269,13 @@ function changePlayerName(){
   if(el.dataset.status===c.status)return;
   el.dataset.status=c.status;
   if(c.status==='ringing'){
-   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub">iPhone 来电…</div></div><div class="call-buttons"><div><button class="call-action decline" onclick="window.shinyuEndCall()">✕</button><div class="call-label">拒绝</div></div><div><button class="call-action accept" onclick="window.shinyuAnswerCall()">☎</button><div class="call-label">接听</div></div></div>';
+   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub">iPhone 来电…</div></div><div class="call-buttons"><div><button class="call-action decline" onclick="window.shinyuEndCall()">✕</button><div class="call-label">拒绝</div></div><div><button class="call-action accept" onclick="window.shinyuAnswerCall()"><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.36 11.36 0 003.57.57 1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.57 1 1 0 01-.24 1.02z"/></svg></button><div class="call-label">接听</div></div></div>';
   }else{
-   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub" id="shinyu-call-duration">00:00</div></div><div class="call-grid"><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">♩</button><div class="call-control-label">静音</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">⌗</button><div class="call-control-label">键盘</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">◉</button><div class="call-control-label">扬声器</div></div></div><div><button class="call-action decline" onclick="window.shinyuEndCall()">☎</button><div class="call-label">结束通话</div></div>';
+   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub" id="shinyu-call-duration">00:00</div></div><div class="call-grid"><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">♩</button><div class="call-control-label">静音</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">⌗</button><div class="call-control-label">键盘</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">◉</button><div class="call-control-label">扬声器</div></div></div><div><button class="call-action decline" onclick="window.shinyuEndCall()"><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.36 11.36 0 003.57.57 1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.57 1 1 0 01-.24 1.02z"/></svg></button><div class="call-label">结束通话</div></div>';
   }
  }
- window.shinyuAnswerCall=function(){const c=readCall();if(!c||c.status!=='ringing')return;c.status='active';c.answeredAt=Date.now();saveCall(c);callOverlay();refresh()};
- window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')return;
+ window.shinyuAnswerCall=function(){const c=readCall();if(!c||c.status!=='ringing')return;stopRing();c.status='active';c.answeredAt=Date.now();saveCall(c);callOverlay();startVoice();refresh()};
+ window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')return;stopRing();stopVoice();
   const t=nowStory();c.status='ended';c.storyAtEnd=t;c.endedAt=Date.now();saveCall(c);callOverlay();refresh();
  };
  function refresh(){
@@ -2264,7 +2289,9 @@ function changePlayerName(){
   const lock=document.getElementById('locktime');if(lock)lock.textContent=hm;
   const date=document.getElementById('lockdate');if(date)date.textContent=storyDate.getFullYear()+'年'+(storyDate.getMonth()+1)+'月'+storyDate.getDate()+'日';
   callOverlay();
+  syncRing();
   const c=readCall();if(c?.status==='active'){
+   if(!voiceStarted&&callVoice.paused)startVoice();
    const d=document.getElementById('shinyu-call-duration');if(d){const seconds=Math.floor((Date.now()-c.answeredAt)/1000);d.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
   }
  }
