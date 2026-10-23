@@ -752,7 +752,7 @@ body{position:fixed!important;inset:0!important;width:100%!important;height:100%
 #phone .lock.passcode{background:transparent!important}
 #phone .lock.passcode .pin-grid button{position:relative;z-index:3;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,255,255,.13)!important}
 #phone .lock.passcode .pass-title{font-size:22px!important;white-space:nowrap}
-</style><style>.sim-camera-modes{min-height:22px}.sim-camera-top span[style*="font-size:11px"]{display:none}</style></head><body><main class="phone wall" id="phone"><div class="status"><span id="statusTime">9:41</span><div class="island"></div><div class="status-indicators" aria-label="가상 셀룰러 네트워크、Wi-Fi 및 배터리"><span id="statusAirplane" style="display:none;font-size:15px">✈</span><svg id="statusCell" width="19" height="15" viewBox="0 0 19 15" aria-label="셀룰러"><rect x="0" y="10" width="3" height="5" rx=".6"/><rect x="5" y="7" width="3" height="8" rx=".6"/><rect x="10" y="4" width="3" height="11" rx=".6"/><rect x="15" y="1" width="3" height="14" rx=".6"/></svg><svg id="statusWifi" width="19" height="15" viewBox="0 0 19 15" fill="none" aria-label="Wi-Fi"><path d="M1.3 5.3Q9.5-1 17.7 5.3M4.5 8.8Q9.5 4.8 14.5 8.8M8 12Q9.5 10.8 11 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9.5" cy="13.5" r="1.2" fill="currentColor"/></svg><div class="status-battery" id="statusBattery" aria-label="배터리 시뮬레이션"><div class="status-battery-fill" id="statusBatteryFill"></div><span id="statusBatteryText" class="status-battery-text"></span></div></div></div><div class="screen" id="screen"></div><button type="button" class="gesture" id="homeGesture" aria-label="탭하여 홈 화면으로" onclick="if(app==='lock'){unlockToPasscode()}else if(app!=='passcode'){home()}"></button><div id="notice"></div><div id="simBrightnessShade" aria-hidden="true"></div></main><script>
+</style></head><body><main class="phone wall" id="phone"><div class="status"><span id="statusTime">9:41</span><div class="island"></div><div class="status-indicators" aria-label="가상 셀룰러 네트워크、Wi-Fi 및 배터리"><span id="statusAirplane" style="display:none;font-size:15px">✈</span><svg id="statusCell" width="19" height="15" viewBox="0 0 19 15" aria-label="셀룰러"><rect x="0" y="10" width="3" height="5" rx=".6"/><rect x="5" y="7" width="3" height="8" rx=".6"/><rect x="10" y="4" width="3" height="11" rx=".6"/><rect x="15" y="1" width="3" height="14" rx=".6"/></svg><svg id="statusWifi" width="19" height="15" viewBox="0 0 19 15" fill="none" aria-label="Wi-Fi"><path d="M1.3 5.3Q9.5-1 17.7 5.3M4.5 8.8Q9.5 4.8 14.5 8.8M8 12Q9.5 10.8 11 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9.5" cy="13.5" r="1.2" fill="currentColor"/></svg><div class="status-battery" id="statusBattery" aria-label="배터리 시뮬레이션"><div class="status-battery-fill" id="statusBatteryFill"></div><span id="statusBatteryText" class="status-battery-text"></span></div></div></div><div class="screen" id="screen"></div><button type="button" class="gesture" id="homeGesture" aria-label="탭하여 홈 화면으로" onclick="if(app==='lock'){unlockToPasscode()}else if(app!=='passcode'){home()}"></button><div id="notice"></div><div id="simBrightnessShade" aria-hidden="true"></div></main><script>
 /* Reset only this simulator's saved data on every page load or refresh. */
 try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&(k.startsWith('shinyu_')||k==='wvsSoloPhotos'))localStorage.removeItem(k)}}catch(e){}
 </script><script>
@@ -1034,7 +1034,7 @@ function setupHomeSwipe(){
 let cameraStream=null,cameraFacing='environment',cameraReady=false;
 function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}cameraReady=false}
 function renderCamera(){
- screen(`<div class="sim-camera"><div class="sim-camera-top"><span>⌄</span><span>⚡ </span><span>◉</span></div><div class="sim-camera-view"><video id="simCameraVideo" autoplay playsinline muted></video><div id="simCameraHint">카메라를 시작하는 중…</div></div><div class="sim-camera-bottom"><div class="sim-camera-modes" aria-hidden="true"></div><div class="sim-camera-controls"><button class="sim-camera-thumb" onclick="cameraOpenGallery()" aria-label="사진 보관함">▧</button><button class="sim-camera-shutter" onclick="cameraTakePhoto()" aria-label="사진 촬영"><span></span></button><button class="sim-camera-flip" onclick="cameraFlip()" aria-label="카메라 전환">⟳</button></div></div></div>`);
+ screen(`<div class="sim-camera"><div class="sim-camera-top"><span>⌄</span><span>⚡ <span style="font-size:11px">끔</span></span><span>◉</span></div><div class="sim-camera-view"><video id="simCameraVideo" autoplay playsinline muted></video><div id="simCameraHint">카메라를 시작하는 중…</div></div><div class="sim-camera-bottom"><div class="sim-camera-modes"><span>비디오</span><b>사진</b><span>인물 사진</span></div><div class="sim-camera-controls"><button class="sim-camera-thumb" onclick="cameraOpenGallery()" aria-label="사진 보관함">▧</button><button class="sim-camera-shutter" onclick="cameraTakePhoto()" aria-label="사진 촬영"><span></span></button><button class="sim-camera-flip" onclick="cameraFlip()" aria-label="카메라 전환">⟳</button></div></div></div>`);
  startCamera();
 }
 async function startCamera(){
@@ -1396,7 +1396,7 @@ messageThreads=[
 function messageSave(){save('messageThreads',messageThreads)}
 function messageOpen(i){messageActive=i;messageComposing=false;renderMessages()}
 function messageBack(){messageActive=-1;messageComposing=false;renderMessages()}
-function messageSend(){const el=document.getElementById('msg-input');if(!el)return;const t=el.value.trim();if(!t)return;let n=messageThreads[messageActive];if(!n)return;n.messages.push({me:true,text:t,time:storyClockTime()});messageSave();renderMessages()}
+function messageSend(){const el=document.getElementById('msg-input');if(!el)return;const t=el.value.trim();if(!t)return;let n=messageThreads[messageActive];if(!n)return;n.messages.push({me:true,text:t,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});messageSave();renderMessages()}
 function messageNew(){messageActive=-1;messageComposing=true;renderMessages()}
 function messageCreate(){let el=document.getElementById('msg-recipient');if(!el)return;let n=el.value.trim();if(!n)return;let idx=messageThreads.findIndex(x=>x.name===n);if(idx<0){messageThreads.unshift({name:n,messages:[]});idx=0;messageSave()}messageOpen(idx)}
 function renderMessages(){
@@ -1628,29 +1628,7 @@ if(b)b.classList.toggle('low',level<=20||!!v.lowpower);
 if(b)b.classList.toggle('charging',!!v.charging);
 if(t)t.textContent=level+'%';
 }
-/* 全局剧情时钟：现实每分钟推进虚拟120分钟；剧情可通过 storyClockPause/storyClockSet 控制。 */
-const STORY_CLOCK_KEY='virtual_story_clock_v1';
-let storyClockState;
-try{storyClockState=JSON.parse(localStorage.getItem(STORY_CLOCK_KEY)||'null')}catch(e){}
-// 开局固定在 2026-10-24 16:42；剧情期间只随消息时间推进。
-const STORY_START_MS=new Date(2026,9,24,16,42).getTime();
-if(!storyClockState||storyClockState.mode!=='reply-driven-v2')storyClockState={base:STORY_START_MS,real:Date.now(),paused:true,mode:'reply-driven-v2'};
-function storyClockMessage(time){
- if(!/^\d{2}:\d{2}$/.test(time))return;
- const [h,m]=time.split(':').map(Number);
- const target=new Date(2026,9,24,h,m).getTime();
- if(target>=storyClockState.base){storyClockState.base=target;storyClockState.real=Date.now();storyClockState.paused=true;storyClockSave();updateClocks()}
-}
-window.storyClockMessage=storyClockMessage;
-
-function storyClockNow(){return new Date(storyClockState.base+(storyClockState.paused?0:(Date.now()-storyClockState.real)*120))}
-function storyClockSave(){try{localStorage.setItem(STORY_CLOCK_KEY,JSON.stringify(storyClockState))}catch(e){}}
-function storyClockPause(paused=true){storyClockState.base=storyClockNow().getTime();storyClockState.real=Date.now();storyClockState.paused=!!paused;storyClockSave();updateClocks()}
-function storyClockSet(value){let date=value instanceof Date?value:new Date(value);if(!Number.isFinite(date.getTime()))return;storyClockState.base=date.getTime();storyClockState.real=Date.now();storyClockSave();updateClocks()}
-function storyClockTime(){return storyClockNow().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})}
-window.storyClockPause=storyClockPause;window.storyClockSet=storyClockSet;window.storyClockNow=storyClockNow;
-storyClockSave();
-function updateClocks(){updateStatusIndicators();let d=storyClockNow(),hm=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});$('#statusTime').textContent=hm;let l=$('#locktime');if(l)l.textContent=hm;let ld=$('#lockdate');if(ld)ld.textContent=d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});let sw=$('#swdisplay');if(sw)sw.textContent=fmt(elapsed());let td=$('#timerDisplay');if(td){let v=timerOn?Math.max(0,timerEnd-Date.now()):timerLeft;if(timerOn&&v===0){timerOn=false;timerLeft=0;notify('카운트다운 종료')}td.textContent=`${String(Math.floor(v/60000)).padStart(2,'0')}:${String(Math.floor(v/1000)%60).padStart(2,'0')}`}for(let [id,tz] of [['seoul','Asia/Seoul'],['tokyo','Asia/Tokyo'],['ny','America/New_York']]){let e=$('#'+id);if(e)e.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'})}[['Asia/Seoul','clock-city-0'],['Asia/Tokyo','clock-city-1'],['America/New_York','clock-city-2'],['Europe/London','clock-city-3']].forEach(([tz,id],i)=>{let el=document.getElementById(id);if(el)el.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'});let off=document.getElementById('clock-offset-'+i);if(off){let hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',hourCycle:'h23'}).format(d));let local=d.getHours();let diff=(hour-local+36)%24-12;off.textContent=(diff===0?'오늘':diff>0?'오늘 · +'+diff+'시간':'오늘 · '+diff+'시간')}});document.querySelectorAll('.clock-svg-hour').forEach(el=>el.setAttribute('transform',`rotate(${(d.getHours()%12+d.getMinutes()/60)*30} 32 32)`));document.querySelectorAll('.clock-svg-minute').forEach(el=>el.setAttribute('transform',`rotate(${(d.getMinutes()+d.getSeconds()/60)*6} 32 32)`));document.querySelectorAll('.clock-svg-second').forEach(el=>el.setAttribute('transform',`rotate(${(d.getSeconds()+d.getMilliseconds()/1000)*6} 32 32)`));document.querySelectorAll('.iconclock').forEach(el=>{let h=d.getHours()%12+d.getMinutes()/60,m=d.getMinutes()+d.getSeconds()/60,s=d.getSeconds();el.querySelector('.hour').style.transform=`translateX(-50%) rotate(${h*30}deg)`;el.querySelector('.minute').style.transform=`translateX(-50%) rotate(${m*6}deg)`;el.querySelector('.second').style.transform=`translateX(-50%) rotate(${s*6}deg)`})}setInterval(updateClocks,50);render();
+function updateClocks(){updateStatusIndicators();let d=new Date(),hm=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});$('#statusTime').textContent=hm;let l=$('#locktime');if(l)l.textContent=hm;let ld=$('#lockdate');if(ld)ld.textContent='20xx年10月24日';let sw=$('#swdisplay');if(sw)sw.textContent=fmt(elapsed());let td=$('#timerDisplay');if(td){let v=timerOn?Math.max(0,timerEnd-Date.now()):timerLeft;if(timerOn&&v===0){timerOn=false;timerLeft=0;notify('카운트다운 종료')}td.textContent=`${String(Math.floor(v/60000)).padStart(2,'0')}:${String(Math.floor(v/1000)%60).padStart(2,'0')}`}for(let [id,tz] of [['seoul','Asia/Seoul'],['tokyo','Asia/Tokyo'],['ny','America/New_York']]){let e=$('#'+id);if(e)e.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'})}[['Asia/Seoul','clock-city-0'],['Asia/Tokyo','clock-city-1'],['America/New_York','clock-city-2'],['Europe/London','clock-city-3']].forEach(([tz,id],i)=>{let el=document.getElementById(id);if(el)el.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'});let off=document.getElementById('clock-offset-'+i);if(off){let hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',hourCycle:'h23'}).format(d));let local=d.getHours();let diff=(hour-local+36)%24-12;off.textContent=(diff===0?'오늘':diff>0?'오늘 · +'+diff+'시간':'오늘 · '+diff+'시간')}});document.querySelectorAll('.clock-svg-hour').forEach(el=>el.setAttribute('transform',`rotate(${(d.getHours()%12+d.getMinutes()/60)*30} 32 32)`));document.querySelectorAll('.clock-svg-minute').forEach(el=>el.setAttribute('transform',`rotate(${(d.getMinutes()+d.getSeconds()/60)*6} 32 32)`));document.querySelectorAll('.clock-svg-second').forEach(el=>el.setAttribute('transform',`rotate(${(d.getSeconds()+d.getMilliseconds()/1000)*6} 32 32)`));document.querySelectorAll('.iconclock').forEach(el=>{let h=d.getHours()%12+d.getMinutes()/60,m=d.getMinutes()+d.getSeconds()/60,s=d.getSeconds();el.querySelector('.hour').style.transform=`translateX(-50%) rotate(${h*30}deg)`;el.querySelector('.minute').style.transform=`translateX(-50%) rotate(${m*6}deg)`;el.querySelector('.second').style.transform=`translateX(-50%) rotate(${s*6}deg)`})}setInterval(updateClocks,50);render();
 
 initIGImages();
 </script><script id="ios-page-scroll-guard-v41">
@@ -1804,7 +1782,6 @@ function birthdayEndCall(){
  function openChat(){stop();kktRoom='申惟';kktTab='chats';app='KKT';render();}
  function next(i){
    if(stopped||i>=lines.length)return;
-   if(i===3)window.storyClockMessage?.('16:43');
    window.playKktNotificationSound?.();
    let stack=document.getElementById('group-wish-stack');
    if(!stack){stack=document.createElement('div');stack.id='group-wish-stack';document.getElementById('phone').appendChild(stack);}
@@ -2131,7 +2108,7 @@ function changePlayerName(){
    const scroll=document.getElementById('kkt-scroll');if(scroll)scroll.scrollTop=scroll.scrollHeight;
  }
  function room(){return Array.isArray(chats['申惟'])?chats['申惟']:null}
- function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats);window.storyClockMessage?.(time)}
+ function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats)}
  function nextReply(){if(!pending.length){waiting=false;refresh();return}
    const [text,time]=pending.shift();add('申惟',text,time);window.playKktNotificationSound?.();
    if(app==='KKT'&&kktRoom==='申惟')renderKKT();
@@ -2161,7 +2138,7 @@ function changePlayerName(){
  const oldRender=window.renderKKT;
  window.renderKKT=function(){const v=oldRender.apply(this,arguments);decorate();return v};
  window.kktSend=function(){if(waiting||stage>=steps.length||count<steps[stage].me.length)return;
-  const item=steps[stage];add('我',item.me,item.at);stage++;localStorage.setItem(KEY,String(stage));count=0;
+  const item=steps[stage];add('我',item.me,item.at);stage++;localStorage.setItem(KEY,String(stage));if(stage>=steps.length)window.startStoryAcceleratedClock?.();count=0;
   waiting=Boolean(item.reply?.length);pending=item.reply?item.reply.slice():[];
   renderKKT();
   if(waiting)setTimeout(nextReply,850);
@@ -2207,6 +2184,85 @@ function changePlayerName(){
     if(notReady()&&name!=='설정')return;
     return originalOpen.apply(this,arguments);
   };
+})();
+</script>
+
+<style id="shinyu-call-style">
+#shinyu-call-overlay{position:absolute;inset:0;z-index:99999;background:linear-gradient(165deg,#354454,#171e2a 68%,#101721);color:white;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:90px 22px 75px;box-sizing:border-box;text-align:center;border-radius:inherit}
+#shinyu-call-overlay .caller-name{font-size:35px;font-weight:500;letter-spacing:1px;margin-top:14px}
+#shinyu-call-overlay .caller-sub{font-size:14px;color:#c8cdd3;margin-top:12px}
+#shinyu-call-overlay .caller-photo{width:108px;height:108px;border-radius:55px;background:linear-gradient(140deg,#b2bbc7,#71869b);display:grid;place-items:center;font-size:49px;margin:0 auto 16px;box-shadow:0 8px 28px #0004}
+#shinyu-call-overlay .call-buttons{width:100%;display:flex;justify-content:space-around;align-items:center}
+#shinyu-call-overlay .call-action{border:0;border-radius:50%;width:76px;height:76px;color:white;font-size:30px;display:grid;place-items:center;cursor:pointer}
+#shinyu-call-overlay .call-action.decline{background:#ef4d50}#shinyu-call-overlay .call-action.accept{background:#32c85a}
+#shinyu-call-overlay .call-label{font-size:13px;margin-top:10px;color:#e6e6e6}
+#shinyu-call-overlay .call-control{border:0;background:#ffffff22;color:white;border-radius:50%;width:67px;height:67px;font-size:24px;cursor:pointer}
+#shinyu-call-overlay .call-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 32px;margin:20px auto 45px}
+#shinyu-call-overlay .call-control.selected{background:#ffffff66}
+#shinyu-call-overlay .call-control-label{font-size:12px;margin-top:8px;color:#d3d7dd}
+</style>
+<script id="story-accelerated-clock">
+(function(){
+ const START='shinyu_story_clock_start_v1';
+ const STAGE='shinyu_oct24_interactive_stage_v1';
+ const CALL='shinyu_oct24_call_state_v1';
+ const BASE=Date.parse('2026-10-24T17:07:00');
+ const TARGET=Date.parse('2026-10-24T19:30:00');
+ const TOTAL=10;
+ function getStart(){const n=Number(localStorage.getItem(START));return Number.isFinite(n)&&n>0?n:0}
+ function readCall(){try{return JSON.parse(localStorage.getItem(CALL)||'null')}catch(e){return null}}
+ function saveCall(c){localStorage.setItem(CALL,JSON.stringify(c))}
+ function nowStory(){
+  const start=getStart();if(!start)return BASE;
+  const c=readCall();
+  if(c){
+   if(c.status==='ringing')return TARGET;
+   if(c.status==='active')return TARGET+Math.max(0,Date.now()-c.answeredAt);
+   if(c.status==='ended')return c.storyAtEnd+Math.max(0,Date.now()-c.endedAt)*120;
+  }
+  return BASE+Math.max(0,Date.now()-start)*120;
+ }
+ window.getStoryTime=()=>new Date(nowStory());
+ window.startStoryAcceleratedClock=function(){
+  if(getStart())return;
+  localStorage.setItem(START,String(Date.now()));refresh();
+ };
+ function callOverlay(){
+  const phone=document.getElementById('phone');if(!phone)return;
+  const c=readCall();let el=document.getElementById('shinyu-call-overlay');
+  if(!c||c.status==='ended'){if(el)el.remove();return}
+  if(!el){el=document.createElement('div');el.id='shinyu-call-overlay';phone.appendChild(el)}
+  if(el.dataset.status===c.status)return;
+  el.dataset.status=c.status;
+  if(c.status==='ringing'){
+   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub">iPhone 来电…</div></div><div class="call-buttons"><div><button class="call-action decline" onclick="window.shinyuEndCall()">✕</button><div class="call-label">拒绝</div></div><div><button class="call-action accept" onclick="window.shinyuAnswerCall()">☎</button><div class="call-label">接听</div></div></div>';
+  }else{
+   el.innerHTML='<div><div class="caller-photo">🐰</div><div class="caller-name">申惟 🤍</div><div class="caller-sub" id="shinyu-call-duration">00:00</div></div><div class="call-grid"><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">♩</button><div class="call-control-label">静音</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">⌗</button><div class="call-control-label">键盘</div></div><div><button class="call-control" onclick="this.classList.toggle(&quot;selected&quot;)">◉</button><div class="call-control-label">扬声器</div></div></div><div><button class="call-action decline" onclick="window.shinyuEndCall()">☎</button><div class="call-label">结束通话</div></div>';
+  }
+ }
+ window.shinyuAnswerCall=function(){const c=readCall();if(!c||c.status!=='ringing')return;c.status='active';c.answeredAt=Date.now();saveCall(c);callOverlay();refresh()};
+ window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')return;
+  const t=nowStory();c.status='ended';c.storyAtEnd=t;c.endedAt=Date.now();saveCall(c);callOverlay();refresh();
+ };
+ function refresh(){
+  const start=getStart();if(!start)return;
+  if(!readCall()&&BASE+Math.max(0,Date.now()-start)*120>=TARGET){
+   saveCall({status:'ringing'});
+  }
+  const storyDate=new Date(nowStory());
+  const hm=String(storyDate.getHours()).padStart(2,'0')+':'+String(storyDate.getMinutes()).padStart(2,'0');
+  const status=document.getElementById('statusTime');if(status)status.textContent=hm;
+  const lock=document.getElementById('locktime');if(lock)lock.textContent=hm;
+  const date=document.getElementById('lockdate');if(date)date.textContent=storyDate.getFullYear()+'年'+(storyDate.getMonth()+1)+'月'+storyDate.getDate()+'日';
+  callOverlay();
+  const c=readCall();if(c?.status==='active'){
+   const d=document.getElementById('shinyu-call-duration');if(d){const seconds=Math.floor((Date.now()-c.answeredAt)/1000);d.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
+  }
+ }
+ if(Number(localStorage.getItem(STAGE)||0)>=TOTAL&&!getStart())window.startStoryAcceleratedClock();
+ setInterval(refresh,250);
+ document.addEventListener('visibilitychange',refresh);
+ refresh();
 })();
 </script>
 </body></html>
