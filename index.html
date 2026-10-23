@@ -1765,92 +1765,41 @@ function birthdayEndCall(){
 }
 
 </script>
-<script id="group-birthday-unlock-notifications">
+<script id="shinyu-oct24-notifications">
 (function(){
-  let started=false;
-  let notificationsStopped=false;
-  let activeTimer=null;
-  const wishes=[
-    ['신유','영재야 생일 축하해 🎂 오늘 맛있는 거 많이 먹고 행복한 하루 보내!'],
-    ['한진','영재 형 생일 축하해요!! 🎉 오늘은 형이 제일 행복해야 해요 ㅎㅎ'],
-    ['지훈','영재 형 생일 축하해요!! 🥳🎂 오늘 케이크 같이 먹어요!'],
-    ['경민','영재 형 생일 축하해요!! 🎂🎉 선물 기대해도 돼요 ㅋㅋ']
-  ];
-  const esc=(s)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  function stack(){
-    let el=document.getElementById('group-wish-stack');
-    if(!el){el=document.createElement('div');el.id='group-wish-stack';document.getElementById('phone').appendChild(el)}
-    return el;
-  }
-  function openKktList(){
-    notificationsStopped=true;
-    clearTimeout(activeTimer);
-    document.getElementById('group-wish-stack')?.remove();
-    birthdayKktVisited=true;
-    kktRoom=null;
-    kktTab='chats';
-    app='KKT';
-    render();
-  }
-  function dismiss(card,bySwipe=false){
-    if(card.dataset.dismissed)return;
-    if(bySwipe)window.stopKktNotificationSound?.();
-    card.dataset.dismissed='1';
-    clearTimeout(activeTimer);
-    card.classList.add('dismissing');
-    setTimeout(()=>{card.remove();if(!notificationsStopped)showWish(Number(card.dataset.wishIndex)+1)},340);
-  }
-  function showWish(i){
-    if(notificationsStopped||i>=wishes.length)return;
-    window.playKktNotificationSound?.();
-    const [sender,message]=wishes[i];
-    const card=document.createElement('div');
-    card.className='group-wish-card';
-    card.dataset.wishIndex=String(i);
-    card.setAttribute('role','button');
-    card.tabIndex=0;
-    card.setAttribute('aria-label','카카오톡 '+sender+' '+message+' 채팅 목록 열기');
-    card.innerHTML='<span class="group-wish-avatar"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="11" r="7"/><path d="M3 29c0-9 6-13 13-13s13 4 13 13z"/></svg><span class="group-wish-talk" aria-label="KakaoTalk"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#fee500"/><path d="M16 6C8.7 6 3 10.4 3 15.9c0 3.5 2.3 6.6 5.9 8.3l-1.2 5 6.1-3.5c.7.1 1.5.1 2.2.1 7.3 0 13-4.4 13-9.9S23.3 6 16 6z" fill="#392f27"/></svg></span></span><span class="group-wish-content"><span class="group-wish-header"><strong>'+esc(sender)+'</strong><small>지금</small></span><span class="group-wish-message">'+esc(message)+'</span></span>';
-    let startX=0,startY=0,dragged=false,tracking=false;
-    card.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='mouse'&&e.button!==0)return;
-      tracking=true;dragged=false;startX=e.clientX;startY=e.clientY;
-      card.style.transition='none';
-      try{card.setPointerCapture(e.pointerId)}catch(_){}
-    });
-    card.addEventListener('pointermove',e=>{
-      if(!tracking)return;
-      const dy=e.clientY-startY,dx=e.clientX-startX;
-      if(Math.abs(dy)>7||Math.abs(dx)>9)dragged=true;
-      if(dragged){
-        card.style.transform='translate('+Math.max(-80,Math.min(80,dx))*.35+'px,'+Math.max(-125,Math.min(55,dy))+'px)';
-        card.style.opacity=String(Math.max(.2,1-Math.abs(dy)/170));
-      }
-    });
-    function endDrag(e){
-      if(!tracking)return;
-      tracking=false;
-      const dy=e.clientY-startY,dx=e.clientX-startX;
-      card.style.transition='';card.style.transform='';card.style.opacity='';
-      if(dy < -48 || Math.abs(dx)>95){dismiss(card,true)}
-      else if(!dragged)openKktList();
-      if(dragged){card.dataset.justDragged='1';setTimeout(()=>delete card.dataset.justDragged,150)}
-    }
-    card.addEventListener('pointerup',endDrag);
-    card.addEventListener('pointercancel',()=>{tracking=false;card.style.transition='';card.style.transform='';card.style.opacity=''});
-    card.addEventListener('click',e=>{if(card.dataset.justDragged||card.dataset.dismissed)return;if(e.detail===0)openKktList()});
-    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openKktList()}});
-    stack().appendChild(card);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add('visible')));
-    // Only one banner is visible at a time. The next arrives after this one leaves.
-    activeTimer=setTimeout(()=>dismiss(card),3200);
-  }
-  const oldPinPress=pinPress;
-  pinPress=function(d){
-    const wasPasscode=app==='passcode';
-    oldPinPress.apply(this,arguments);
-    if(wasPasscode&&app==='home'&&!started){started=true;setTimeout(()=>showWish(0),700)}
-  };
+ let started=false,stopped=false,timer=null;
+ const lines=['在干嘛','今天晚上有空吗','想去看电影','要不要一起'];
+ const date='2026-10-24';
+ const times=['16:42','16:42','16:43','16:43'];
+ function seedFour(){
+   const key='shinyu_oct24_first_four_v1';
+   if(localStorage.getItem(key)==='ready')return;
+   const room=chats['申惟'];if(!Array.isArray(room))return;
+   for(let i=0;i<4;i++)if(!room.some(m=>m.date===date&&m.time===times[i]&&m.text===lines[i]&&!m.me))room.push({who:'申惟',text:lines[i],me:false,date,time:times[i]});
+   save('chats',chats);localStorage.setItem(key,'ready');
+ }
+ function stop(){stopped=true;clearTimeout(timer);document.getElementById('group-wish-stack')?.remove();}
+ function openChat(){stop();kktRoom='申惟';kktTab='chats';app='KKT';render();}
+ function next(i){
+   if(stopped||i>=lines.length)return;
+   window.playKktNotificationSound?.();
+   let stack=document.getElementById('group-wish-stack');
+   if(!stack){stack=document.createElement('div');stack.id='group-wish-stack';document.getElementById('phone').appendChild(stack);}
+   const card=document.createElement('div');card.className='group-wish-card';card.tabIndex=0;card.setAttribute('role','button');
+   card.setAttribute('aria-label','KakaoTalk 申惟 '+lines[i]);
+   card.innerHTML='<span class="group-wish-avatar" style="background:#fee500;color:#392e00;font-weight:700;font-size:13px">KKT</span><span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><small style="font-size:11px;color:#67717c">KakaoTalk · 现在</small><strong style="font-size:14px">申惟 🤍</strong><span style="font-size:13px">'+lines[i]+'</span></span>';
+   let startY=0,dragged=false;
+   card.addEventListener('pointerdown',e=>{startY=e.clientY;dragged=false;});
+   card.addEventListener('pointerup',e=>{if(e.clientY-startY < -40){dragged=true;dismiss();}});
+   card.addEventListener('click',()=>{if(!dragged)openChat();});
+   card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openChat();}});
+   stack.appendChild(card);
+   requestAnimationFrame(()=>card.classList.add('visible'));
+   function dismiss(){if(stopped||card.dataset.done)return;card.dataset.done='1';card.classList.add('dismissing');clearTimeout(timer);timer=setTimeout(()=>{card.remove();next(i+1);},350);}
+   timer=setTimeout(dismiss,2700);
+ }
+ const oldPinPress=pinPress;
+ pinPress=function(d){const locked=app==='passcode';oldPinPress.apply(this,arguments);if(locked&&app==='home'&&!started){started=true;seedFour();setTimeout(()=>next(0),650);}};
 })();
 </script>
 <style id="kkt-unread-badge-style">
@@ -1861,49 +1810,7 @@ function birthdayEndCall(){
 .kkt-contact{position:relative}
 .kkt-contact .kkt-room-unread{margin-left:auto;align-self:center;flex:0 0 auto;min-width:23px;height:23px;padding:0 6px;display:flex;align-items:center;justify-content:center;background:#f45124;color:#fff;border-radius:999px;font-size:12px;font-weight:700;font-style:normal;line-height:1}
 .kkt-contact .kkt-time:has(+.kkt-room-unread){margin-left:0}
-</style><script id="kkt-unread-badge-logic">
-/* Transient unread counts reset when the simulator reloads. */
-(function(){
- let unread=0;
- const seen=new WeakSet();
- function refresh(){
-  const bar=document.querySelector('.kkt-bottom');
-  const groupRow=[...document.querySelectorAll('.kkt-contact')].find(b=>b.textContent.includes('TWS 단체방'));
-  if(groupRow){
-   groupRow.querySelector('.kkt-room-unread')?.remove();
-   if(unread>0){const badge=document.createElement('i');badge.className='kkt-room-unread';badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label',unread+'개의 읽지 않은 메시지');groupRow.appendChild(badge)}
-  }
-  if(!bar)return;
-  const buttons=[...bar.querySelectorAll('button')];
-  const chatButton=buttons.find(b=>b.getAttribute('onclick')?.includes("'chats'"));
-  if(!chatButton)return;
-  let icon=chatButton.querySelector('.kkt-tab-icon-wrap');
-  if(!icon){const old=chatButton.querySelector('span');if(!old)return;icon=document.createElement('span');icon.className='kkt-tab-icon-wrap';old.replaceWith(icon);icon.appendChild(old)}
-  icon.querySelector('.kkt-unread-badge')?.remove();
-  if(unread>0){const badge=document.createElement('i');badge.className='kkt-unread-badge';badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label',unread+'개의 읽지 않은 메시지');icon.appendChild(badge)}
- }
- const oldRender=renderKKT;
- renderKKT=function(){oldRender.apply(this,arguments);refresh()};
- const oldSwitch=kktSwitch;
- kktSwitch=function(t){oldSwitch.apply(this,arguments);refresh()};
- const oldOpen=kktOpen;
- kktOpen=function(n){oldOpen.apply(this,arguments);if(n==='TWS 단체방'&&kktRoom==='TWS 단체방'){unread=0;refresh()}};
- const observer=new MutationObserver(records=>{
-  let added=0;
-  for(const record of records)for(const node of record.addedNodes){
-   if(node.nodeType!==1)continue;
-   const cards=node.matches?.('.group-wish-card')?[node]:[...(node.querySelectorAll?.('.group-wish-card')||[])];
-   for(const card of cards)if(!seen.has(card)){seen.add(card);added++}
-  }
-  if(added){unread+=added;refresh()}
- });
- observer.observe(document.getElementById('phone')||document.body,{childList:true,subtree:true});
- // Opening the chat list from a notification marks the new group messages read.
- document.addEventListener('click',e=>{
-  if(e.target.closest?.('.group-wish-card'))setTimeout(refresh,0);
- },true);
-})();
-</script><script id="kkt-notification-sound">
+</style><script id="kkt-notification-sound">
 (function(){
  const source='data:audio/mpeg;base64,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qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkxBTUUzLjEwMKqqqqr/+xDE1gPAAAGkAAAAIAAANIAAAASqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7EMTWA8AAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//sQxNYDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr/+xDE1gPAAAGkAAAAIAAANIAAAASqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7EMTWA8AAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//sQxNYDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=';
  let ctx=null,buffer=null,loading=null,activeNode=null,activeAudio=null;
@@ -2143,6 +2050,62 @@ function changePlayerName(){
    }else document.querySelectorAll('.name-gate-tip').forEach(x=>x.remove());
    return result;
  };
+})();
+</script>
+<style id="oct24-story-style">
+.kkt-compose .kkt-send.story-disabled{opacity:.35;filter:grayscale(.5);pointer-events:none}
+.kkt-compose .kkt-send.story-ready{background:#fee500!important;color:#352c00!important;opacity:1!important}
+.kkt-story-read{font-size:10px;color:#d5a900;text-align:right;margin:2px 5px 0}
+.kkt-story-typing{font-size:11px;color:#82909c;padding:5px 18px}
+</style>
+<script id="oct24-interactive-story">
+(function(){
+ const D='2026-10-24';
+ const KEY='shinyu_oct24_interactive_stage_v1';
+ const steps=[
+  {me:'好呀！！',at:'16:51'},
+  {me:'你今天几点下班',at:'16:51',reply:[['还不确定','16:54'],['应该不会太晚','16:54'],['我刚刚看了下附近的影院','16:55'],['有部电影还挺想看的','16:55']]},
+  {me:'可以呀',at:'16:57'},
+  {me:'不过我们得做好防护哦',at:'16:57'},
+  {me:'你记得戴帽子和口罩',at:'16:58',reply:[['嗯 我知道','17:01'],['我会注意的','17:01'],['到时候分开进去吧','17:02'],['人少一点的时候再碰面','17:02']]},
+  {me:'好ㅎㅎ',at:'17:04'},
+  {me:'那我等你消息',at:'17:04',reply:[['嗯','17:06'],['等我下班了给你打电话','17:06']]},
+  {me:'好哦🤍',at:'17:07'}
+ ];
+ let stage=Math.max(0,Math.min(steps.length,Number(localStorage.getItem(KEY)||0)));
+ let count=0,waiting=false,pending=[];
+ function room(){return Array.isArray(chats['申惟'])?chats['申惟']:null}
+ function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats)}
+ function nextReply(){if(!pending.length){waiting=false;refresh();return}
+   const [text,time]=pending.shift();add('申惟',text,time);window.playKktNotificationSound?.();
+   if(app==='KKT'&&kktRoom==='申惟')renderKKT();
+   setTimeout(nextReply,950);
+ }
+ function decorate(){if(app!=='KKT'||kktRoom!=='申惟')return;
+  const input=document.getElementById('kkt-input'),btn=document.querySelector('.kkt-compose .kkt-send');if(!input||!btn)return;
+  if(stage>=steps.length){input.placeholder='聊天已结束';input.disabled=true;btn.disabled=true;btn.classList.add('story-disabled');return}
+  input.placeholder=waiting?'申惟正在回复…':'输入消息';input.disabled=waiting;
+  input.value=steps[stage].me.slice(0,count);
+  btn.disabled=waiting||count<steps[stage].me.length;
+  btn.classList.toggle('story-disabled',btn.disabled);btn.classList.toggle('story-ready',!btn.disabled);
+  input.onbeforeinput=function(e){if(waiting)return;e.preventDefault();advance()};
+  input.oninput=function(){if(waiting)return;advance()};
+  input.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();if(!btn.disabled)window.kktSend();return}if(e.key==='Tab'||e.key.startsWith('Arrow'))return;e.preventDefault();if(e.key==='Backspace'){count=Math.max(0,count-1);refresh();return}advance()};
+  input.onpaste=function(e){e.preventDefault();advance()};
+  btn.onclick=function(){window.kktSend()};
+ }
+ function advance(){if(waiting||stage>=steps.length)return;count=Math.min(steps[stage].me.length,count+1);refresh()}
+ function refresh(){decorate()}
+ const oldRender=window.renderKKT;
+ window.renderKKT=function(){const v=oldRender.apply(this,arguments);decorate();return v};
+ window.kktSend=function(){if(waiting||stage>=steps.length||count<steps[stage].me.length)return;
+  const item=steps[stage];add('我',item.me,item.at);stage++;localStorage.setItem(KEY,String(stage));count=0;
+  waiting=Boolean(item.reply?.length);pending=item.reply?item.reply.slice():[];
+  renderKKT();
+  if(waiting)setTimeout(nextReply,850);
+ };
+ // The four incoming notifications remain the only October 24 messages until the player starts typing.
+ // The earlier 15 days remain accessible by scrolling up.
 })();
 </script>
 </body></html>
