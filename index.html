@@ -1787,7 +1787,7 @@ function birthdayEndCall(){
    if(!stack){stack=document.createElement('div');stack.id='group-wish-stack';document.getElementById('phone').appendChild(stack);}
    const card=document.createElement('div');card.className='group-wish-card';card.tabIndex=0;card.setAttribute('role','button');
    card.setAttribute('aria-label','KakaoTalk 申惟 '+lines[i]);
-   card.innerHTML='<span class="group-wish-avatar" style="background:#fee500;color:#392e00;font-weight:700;font-size:13px">KKT</span><span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><small style="font-size:11px;color:#67717c">KakaoTalk · 现在</small><strong style="font-size:14px">申惟 🤍</strong><span style="font-size:13px">'+lines[i]+'</span></span>';
+   card.innerHTML='<span class="group-wish-avatar"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="13" r="8"/><path d="M5 38c0-10 6-16 15-16s15 6 15 16z"/></svg><span class="group-wish-talk"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#fee500" d="M0 0h32v32H0z"/><path fill="#332d18" d="M16 6C8.8 6 3 10.4 3 16c0 3.5 2.2 6.6 5.5 8.4L7.3 29l5.3-3.2c1.1.2 2.2.3 3.4.3 7.2 0 13-4.4 13-10S23.2 6 16 6z"/></svg></span></span><span class="group-wish-content"><span class="group-wish-header"><strong>申惟 🤍</strong><small>现在</small></span><span class="group-wish-message">'+lines[i]+'</span></span>';
    let startY=0,dragged=false;
    card.addEventListener('pointerdown',e=>{startY=e.clientY;dragged=false;});
    card.addEventListener('pointerup',e=>{if(e.clientY-startY < -40){dragged=true;dismiss();}});
@@ -2057,6 +2057,15 @@ function changePlayerName(){
 .kkt-compose .kkt-send.story-ready{background:#fee500!important;color:#352c00!important;opacity:1!important}
 .kkt-story-read{font-size:10px;color:#d5a900;text-align:right;margin:2px 5px 0}
 .kkt-story-typing{font-size:11px;color:#82909c;padding:5px 18px}
+
+.story-keyboard{flex-shrink:0;background:#d1d5dd;padding:5px 5px 8px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.story-kb-tools{display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 8px;color:#4a5260;font-size:12px}
+.story-kb-tools button{background:none;border:0;color:#4a5260;font-size:12px;padding:3px 8px}
+.story-kb-row{display:flex;justify-content:center;gap:4px;margin:5px 0}
+.story-kb-row button{flex:1;min-width:0;height:36px;border:0;border-radius:5px;background:#fff;color:#28313c;font-size:18px;box-shadow:0 1px 1px #9ca3af}
+.story-kb-row button[data-key="⌫"],.story-kb-row button[data-key="⇧"],.story-kb-row button[data-key="123"],.story-kb-row button[data-key="enter"]{background:#aeb8c8}
+.story-kb-row .story-kb-space{flex:4;font-size:13px}
+.kkt-compose input[readonly]{caret-color:transparent;cursor:pointer}
 </style>
 <script id="oct24-interactive-story">
 (function(){
@@ -2074,6 +2083,30 @@ function changePlayerName(){
  ];
  let stage=Math.max(0,Math.min(steps.length,Number(localStorage.getItem(KEY)||0)));
  let count=0,waiting=false,pending=[];
+ let keyboardOpen=false;
+ function showKeyboard(){
+   if(app!=='KKT'||kktRoom!=='申惟')return;
+   keyboardOpen=true;
+   const chat=document.querySelector('.kkt-chat');if(!chat)return;
+   if(chat.querySelector('.story-keyboard'))return;
+   const kb=document.createElement('div');kb.className='story-keyboard';
+   const rows=['qwertyuiop','asdfghjkl','⇧zxcvbnm⌫'];
+   kb.innerHTML='<div class="story-kb-tools"><span>拼音</span><button type="button" data-key="hide">⌄ 收起</button></div>'+
+     rows.map(row=>'<div class="story-kb-row">'+[...row].map(k=>'<button type="button" data-key="'+k+'">'+k+'</button>').join('')+'</div>').join('')+
+     '<div class="story-kb-row"><button type="button" data-key="123">123</button><button type="button" data-key="emoji">☺</button><button type="button" class="story-kb-space" data-key="space">空格</button><button type="button" data-key="enter">↵</button></div>';
+   kb.addEventListener('pointerdown',e=>e.preventDefault());
+   kb.addEventListener('click',e=>{
+     const key=e.target.closest('button')?.dataset.key;if(!key)return;
+     if(key==='hide'){keyboardOpen=false;kb.remove();return}
+     if(waiting||stage>=steps.length)return;
+     if(key==='⌫'){count=Math.max(0,count-1);refresh();return}
+     if(key==='enter'){if(count===steps[stage].me.length)window.kktSend();return}
+     if(key==='123'||key==='emoji'||key==='⇧')return;
+     advance();
+   });
+   chat.appendChild(kb);
+   const scroll=document.getElementById('kkt-scroll');if(scroll)scroll.scrollTop=scroll.scrollHeight;
+ }
  function room(){return Array.isArray(chats['申惟'])?chats['申惟']:null}
  function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats)}
  function nextReply(){if(!pending.length){waiting=false;refresh();return}
@@ -2084,7 +2117,13 @@ function changePlayerName(){
  function decorate(){if(app!=='KKT'||kktRoom!=='申惟')return;
   const input=document.getElementById('kkt-input'),btn=document.querySelector('.kkt-compose .kkt-send');if(!input||!btn)return;
   if(stage>=steps.length){input.placeholder='聊天已结束';input.disabled=true;btn.disabled=true;btn.classList.add('story-disabled');return}
-  input.placeholder=waiting?'申惟正在回复…':'输入消息';input.disabled=waiting;
+  input.placeholder=waiting?'申惟正在回复…':'点击这里输入消息';input.disabled=waiting;
+  // A simulated in-phone keyboard avoids iOS Safari's native keyboard and viewport zoom.
+  input.readOnly=true;input.setAttribute('inputmode','none');input.setAttribute('autocomplete','off');
+  input.style.fontSize='16px';
+  input.onpointerdown=function(e){e.preventDefault();input.blur();showKeyboard()};
+  input.onclick=function(e){e.preventDefault();input.blur();showKeyboard()};
+  if(keyboardOpen)showKeyboard();
   input.value=steps[stage].me.slice(0,count);
   btn.disabled=waiting||count<steps[stage].me.length;
   btn.classList.toggle('story-disabled',btn.disabled);btn.classList.toggle('story-ready',!btn.disabled);
@@ -2106,6 +2145,45 @@ function changePlayerName(){
  };
  // The four incoming notifications remain the only October 24 messages until the player starts typing.
  // The earlier 15 days remain accessible by scrolling up.
+})();
+</script>
+
+<style id="onboarding-strict-gate-style">
+/* Keep home-screen swiping functional; only Settings may be opened before naming. */
+.phone.name-gated .appbutton:not(.name-allowed){cursor:default;}
+.phone.name-gated .name-gate-tip{pointer-events:none}
+</style>
+<script id="onboarding-strict-gate">
+(function(){
+  function notReady(){return window.playerNameConfirmed!==true;}
+  function isSettingsButton(target){
+    const button=target.closest?.('.appbutton');
+    return !!button && (button.getAttribute('onclick')||'').includes("'설정'");
+  }
+  // Intercept direct handlers (including notifications), without cancelling touch/swipe.
+  document.addEventListener('click',function(e){
+    if(!notReady()||app!=='home')return;
+    const target=e.target;
+    if(isSettingsButton(target))return;
+    if(target.closest?.('.home-dot,.home-dots,.home-swiper,.home-page,.home-track,.home-dots')){
+      if(!target.closest('.appbutton'))return;
+    }
+    if(target.closest?.('.appbutton,#group-wish-stack,.group-wish-card,#birthday-banner,#birthday-incoming-banner')){
+      e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+    }
+  },true);
+  document.addEventListener('keydown',function(e){
+    if(!notReady()||app!=='home')return;
+    if((e.key==='Enter'||e.key===' ')&&e.target.closest?.('.group-wish-card,#group-wish-stack')){
+      e.preventDefault();e.stopImmediatePropagation();
+    }
+  },true);
+  // Prevent programmatic shortcuts into apps while preserving Settings navigation.
+  const originalOpen=window.openApp;
+  window.openApp=function(name){
+    if(notReady()&&name!=='설정')return;
+    return originalOpen.apply(this,arguments);
+  };
 })();
 </script>
 </body></html>
