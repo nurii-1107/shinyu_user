@@ -1632,7 +1632,17 @@ if(t)t.textContent=level+'%';
 const STORY_CLOCK_KEY='virtual_story_clock_v1';
 let storyClockState;
 try{storyClockState=JSON.parse(localStorage.getItem(STORY_CLOCK_KEY)||'null')}catch(e){}
-if(!storyClockState||!Number.isFinite(storyClockState.base))storyClockState={base:Date.now(),real:Date.now(),paused:false};
+// 开局固定在 2026-10-24 16:42；剧情期间只随消息时间推进。
+const STORY_START_MS=new Date(2026,9,24,16,42).getTime();
+if(!storyClockState||storyClockState.mode!=='reply-driven-v2')storyClockState={base:STORY_START_MS,real:Date.now(),paused:true,mode:'reply-driven-v2'};
+function storyClockMessage(time){
+ if(!/^\d{2}:\d{2}$/.test(time))return;
+ const [h,m]=time.split(':').map(Number);
+ const target=new Date(2026,9,24,h,m).getTime();
+ if(target>=storyClockState.base){storyClockState.base=target;storyClockState.real=Date.now();storyClockState.paused=true;storyClockSave();updateClocks()}
+}
+window.storyClockMessage=storyClockMessage;
+
 function storyClockNow(){return new Date(storyClockState.base+(storyClockState.paused?0:(Date.now()-storyClockState.real)*120))}
 function storyClockSave(){try{localStorage.setItem(STORY_CLOCK_KEY,JSON.stringify(storyClockState))}catch(e){}}
 function storyClockPause(paused=true){storyClockState.base=storyClockNow().getTime();storyClockState.real=Date.now();storyClockState.paused=!!paused;storyClockSave();updateClocks()}
@@ -1794,6 +1804,7 @@ function birthdayEndCall(){
  function openChat(){stop();kktRoom='申惟';kktTab='chats';app='KKT';render();}
  function next(i){
    if(stopped||i>=lines.length)return;
+   if(i===3)window.storyClockMessage?.('16:43');
    window.playKktNotificationSound?.();
    let stack=document.getElementById('group-wish-stack');
    if(!stack){stack=document.createElement('div');stack.id='group-wish-stack';document.getElementById('phone').appendChild(stack);}
@@ -2120,7 +2131,7 @@ function changePlayerName(){
    const scroll=document.getElementById('kkt-scroll');if(scroll)scroll.scrollTop=scroll.scrollHeight;
  }
  function room(){return Array.isArray(chats['申惟'])?chats['申惟']:null}
- function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats)}
+ function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats);window.storyClockMessage?.(time)}
  function nextReply(){if(!pending.length){waiting=false;refresh();return}
    const [text,time]=pending.shift();add('申惟',text,time);window.playKktNotificationSound?.();
    if(app==='KKT'&&kktRoom==='申惟')renderKKT();
