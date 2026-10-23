@@ -762,6 +762,11 @@ body{position:fixed!important;inset:0!important;width:100%!important;height:100%
 #phone .lock.passcode .pass-title{font-size:22px!important;white-space:nowrap}
 </style><style id="clock-iphone-reference-style">
 .clock-app{background:#000;color:#fff}.clock-main{padding:15px 20px 20px}.clock-top{justify-content:flex-end;gap:10px;margin:0 0 14px}.clock-top button{background:#242426;border-radius:32px;color:#f4f4f4;padding:10px 15px;font-size:17px}.clock-top .clock-plus{font-size:27px;width:45px;height:45px;padding:0}.clock-title{font-size:37px;font-weight:750;margin:8px 0 8px;letter-spacing:-1px}.clock-row{border-bottom:1px solid #323234;padding:18px 0}.clock-world-row{min-height:90px}.clock-world-right{display:flex;align-items:center;gap:10px}.clock-city{font-size:26px;font-weight:450}.clock-sub{font-size:13px;color:#929297}.clock-citytime{font-size:54px;letter-spacing:-2px;font-weight:250;white-space:nowrap}.clock-tabs{background:#1c1c1e;border:1px solid #343438;border-radius:50px;min-height:61px;margin:0 5px 9px;padding:3px;gap:1px}.clock-tabs button{border-radius:40px;font-size:11px;gap:2px;justify-content:center}.clock-tabs button.active{background:#080809}.clock-tab-icon{font-size:25px;line-height:26px}.clock-tabs button.active .clock-tab-icon{color:#ff9f0a}.clock-sleep-title{font-size:20px;font-weight:650;margin:34px 0 4px}.clock-sleep-row{padding:18px 0 23px}.clock-settings{border-radius:25px!important;background:#242428!important;color:#ff9f0a!important;padding:7px 13px!important}.clock-section-title{font-size:20px;margin:55px 0 12px}.clock-alarm-row{min-height:105px}.clock-alarm-detail{display:flex;align-items:center;gap:8px}.clock-alarm-time{font-size:61px;font-weight:250;line-height:1.04}.clock-switch.on{background:#30d158}.clock-stopwatch-face{height:57%;min-height:210px;display:flex;align-items:center;justify-content:center}.clock-stopwatch-face .clock-digits{font-size:clamp(52px,12vw,78px);font-weight:200;white-space:nowrap;letter-spacing:-4px;margin:0}.clock-circle-actions{align-items:center;margin:0 0 18px}.clock-round{width:76px;height:76px;border:3px solid #000;outline:2px solid #3b3b3e;border-radius:50%;background:#242426;color:#999}.clock-round.green{background:#092d16;color:#30d158;outline-color:#092d16}.clock-page-dots{font-size:13px;color:#fff}.clock-page-dots span{color:#636366}.clock-timer-face{height:50%;display:flex;align-items:center;justify-content:center}.clock-remove{color:#ff453a!important}.clock-sheet-buttons{display:flex;justify-content:flex-end;gap:15px;margin-top:12px}
+</style><style id="ig-person-avatar-update">
+.ig-page .ig-shinyu-avatar{background-image:url('photos/photo_01.jpg')!important;background-size:cover!important;background-position:center!important;color:transparent!important;border-radius:50%!important;overflow:hidden!important}
+.ig-page .ig-default-person{background:#f3f4f6!important;border:0!important;position:relative;overflow:hidden!important;color:transparent!important;border-radius:50%!important}
+.ig-page .ig-default-person::before{content:"";position:absolute;width:39%;height:39%;border-radius:50%;background:#858a94;top:20%;left:30.5%}
+.ig-page .ig-default-person::after{content:"";position:absolute;width:84%;height:58%;border-radius:48% 48% 0 0;background:#858a94;bottom:-27%;left:8%}
 </style></head><body><main class="phone wall" id="phone"><div class="status"><span id="statusTime">9:41</span><div class="island"></div><div class="status-indicators" aria-label="가상 셀룰러 네트워크、Wi-Fi 및 배터리"><span id="statusAirplane" style="display:none;font-size:15px">✈</span><svg id="statusCell" width="19" height="15" viewBox="0 0 19 15" aria-label="셀룰러"><rect x="0" y="10" width="3" height="5" rx=".6"/><rect x="5" y="7" width="3" height="8" rx=".6"/><rect x="10" y="4" width="3" height="11" rx=".6"/><rect x="15" y="1" width="3" height="14" rx=".6"/></svg><svg id="statusWifi" width="19" height="15" viewBox="0 0 19 15" fill="none" aria-label="Wi-Fi"><path d="M1.3 5.3Q9.5-1 17.7 5.3M4.5 8.8Q9.5 4.8 14.5 8.8M8 12Q9.5 10.8 11 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9.5" cy="13.5" r="1.2" fill="currentColor"/></svg><div class="status-battery" id="statusBattery" aria-label="배터리 시뮬레이션"><div class="status-battery-fill" id="statusBatteryFill"></div><span id="statusBatteryText" class="status-battery-text"></span></div></div></div><div class="screen" id="screen"></div><button type="button" class="gesture" id="homeGesture" aria-label="탭하여 홈 화면으로" onclick="if(app==='lock'){unlockToPasscode()}else if(app!=='passcode'){home()}"></button><div id="notice"></div><div id="simBrightnessShade" aria-hidden="true"></div></main><script>
 /* Reset only this simulator's saved data on every page load or refresh. */
 try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&(k.startsWith('shinyu_')||k==='wvsSoloPhotos'))localStorage.removeItem(k)}}catch(e){}
@@ -1134,7 +1139,7 @@ function renderFollowingIG(){return `<div class="ig-profile"><div class="ig-priv
 function igStoryAvatar(label,image,mine=false){return `<span class="ig-story-ring ${mine?'ig-mine':''}"><span class="ig-story-inner">${image?`<img src="${image}" alt="" onerror="this.style.display='none'">`:`<span>${label}</span>`}</span>${mine?'<i class="ig-add-story">+</i>':''}</span>`}
 const igKnownStories=[
  {name:'我的快拍',label:'☁️',mine:true,image:''},
- {name:'yu._.1107',label:'申惟',image:''},
+ {name:'yu._.1107',label:'申惟',image:'photos/photo_01.jpg'},
  {name:'yj._.0531',label:'英宰',image:''},
  {name:'han._.0105',label:'韩振',image:''},
  {name:'jii._.0328',label:'志勋',image:''},
@@ -1146,13 +1151,47 @@ function igOpenKnownStory(index){
  const old=document.getElementById('ig-known-story');if(old)old.remove();
  host.insertAdjacentHTML('beforeend',`<div class="ig-known-story" id="ig-known-story"><div class="ig-known-progress"><i></i></div><div class="ig-known-header">${igStoryAvatar(item.label,item.image)}<b>${item.name}</b><small>5시간</small><button onclick="document.getElementById('ig-known-story').remove()" aria-label="닫기">×</button></div><img class="ig-known-image" src="${item.image}" alt="${item.name} 스토리"><div class="ig-known-caption">오늘도 좋은 하루 💙</div><div class="ig-known-reply">메시지 보내기 <span>♡　➤</span></div></div>`);
 }
+// 申惟的小号：仅使用预置相册照片，绝不使用 USER 拍摄的照片。
+const igShinyuAccount='yu._.1107';
+const igShinyuSeed=[
+ {id:'shinyu-old-1',image:'photos/photo_03.jpg',caption:'最近。',date:'1个月前',likes:18},
+ {id:'shinyu-old-2',image:'photos/photo_11.jpg',caption:'☁️',date:'3周前',likes:11},
+ {id:'shinyu-old-3',image:'photos/photo_19.jpg',caption:'天气不错',date:'2周前',likes:23},
+ {id:'shinyu-old-4',image:'photos/photo_27.jpg',caption:'',date:'8天前',likes:15},
+ {id:'shinyu-old-5',image:'photos/photo_35.jpg',caption:'ㅎㅎ',date:'3天前',likes:26}
+];
+let igShinyuPosts=load('igShinyuPosts',igShinyuSeed);
+let igShinyuDraft=-1,igShinyuCaption='';
+function igShinyuComments(p){return igPrivateFanComments(p.id)}
+function igShinyuCount(p){const stage=igEngagementStage[p.id];return stage==='pending'||stage==='exited'?0:igShinyuComments(p).length}
+function igShinyuLikes(p){const stage=igEngagementStage[p.id];return stage==='pending'||stage==='exited'?0:(p.likes||12)}
+function igShinyuArticle(p,i){const n=igShinyuCount(p);return `<article class="ig-post" id="${p.id}"><div class="ig-post-head"><span class="ig-avatar ig-shinyu-avatar"></span><div class="ig-user"><b>${igShinyuAccount}</b><span>${p.date||'刚刚'}</span></div></div><div class="ig-media-real"><img src="${p.image}" alt="申惟的相册照片" loading="lazy"></div><div class="ig-actions ig-action-bar"><button onclick="igToggleLike('${p.id}',this)" class="${likes[p.id]?'liked':''}">${igIcon('heart',!!likes[p.id])}</button><button onclick="igOpenComments('${p.id}')">${igIcon('comment')}</button></div><div class="ig-copy"><b>${igShinyuAccount}</b> ${esc(p.caption||'')}</div><div class="ig-post-likes" style="padding:4px 13px">${igShinyuLikes(p)+(likes[p.id]?1:0)} 次赞</div><button class="ig-view-comments" onclick="igOpenComments('${p.id}')">查看全部 ${n+(comments[p.id]||[]).length} 条评论</button><div class="ig-date">${p.date||'刚刚'}</div></article>`}
+function renderShinyuIG(){return `<div class="ig-profile private-profile"><div class="ig-private-title"><b>${igShinyuAccount}</b><button onclick="igShinyuStartPost()" style="border:0;background:transparent;font-size:24px">＋</button></div><div class="ig-profile-header"><div class="ig-avatar large private-avatar ig-shinyu-avatar"></div><div class="private-stats"><div><b>${igShinyuPosts.length}</b><small>帖子</small></div><div><b>37</b><small>粉丝</small></div><div><b>42</b><small>关注</small></div></div></div><b>日常</b><p>偶尔记录一下 ☁️</p><div class="ig-own-grid">${igShinyuPosts.map((p,i)=>`<button onclick="igViewShinyuPost(${i})"><img src="${p.image}" loading="lazy" alt="帖子照片"></button>`).join('')}</div></div>`}
+function igViewShinyuPost(i){const p=igShinyuPosts[i];if(p)igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">‹ 返回</button><b>帖子</b><span></span></div><div class="ig-create-scroll">${igShinyuArticle(p,i)}</div></div>`)}
+function igShinyuStartPost(){igShinyuDraft=-1;igShinyuCaption='';igShinyuPicker()}
+function igShinyuPicker(){const imgs=igOriginalGalleryPhotos;const chosen=igShinyuDraft>=0?imgs[igShinyuDraft]:null;igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">取消</button><b>申惟 · 选择照片</b><button class="ig-next" onclick="igShinyuWrite()">下一步</button></div><div class="ig-create-scroll"><div class="ig-create-hero">${chosen?`<img src="${chosen}">`:'从原相册选择照片'}</div><div class="ig-create-grid">${imgs.map((src,i)=>`<button onclick="igShinyuDraft=${i};igShinyuPicker()" class="${i===igShinyuDraft?'chosen':''}"><img src="${src}" loading="lazy"></button>`).join('')}</div></div></div>`)}
+function igShinyuWrite(){if(igShinyuDraft<0){notify('请先选择照片');return}igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igShinyuPicker()">‹ 返回</button><b>新帖子</b><button class="ig-next" onclick="igShinyuPublish()">发布</button></div><div class="ig-create-scroll"><div class="ig-create-caption"><textarea id="ig-shinyu-caption" placeholder="写点什么……" maxlength="2200"></textarea><img src="${igOriginalGalleryPhotos[igShinyuDraft]}"></div></div></div>`)}
+function igShinyuPublish(){if(igShinyuDraft<0)return;const post={id:'shinyu-'+Date.now(),image:igOriginalGalleryPhotos[igShinyuDraft],caption:document.getElementById('ig-shinyu-caption')?.value||'',date:'刚刚',likes:5+Math.floor(Math.random()*19)};igShinyuPosts.unshift(post);save('igShinyuPosts',igShinyuPosts);igEngagementStage[post.id]='pending';save('igEngagementStage',igEngagementStage);igTab='shinyu';renderIG()}
 function igProfileIcon(){return `<span class="ig-nav-profile">☁️</span>`}
 
 // Local-only simulated Instagram publishing. Photos are selected from the phone gallery.
 let igMyPosts=load('igMyPosts',[]),igDraftPhoto=-1,igDraftCaption='';
+// USER can take a new photo while composing an Instagram post.
+function igTakePostPhoto(){
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');
+ input.onchange=()=>{const file=input.files&&input.files[0];if(!file)return;
+ const url=URL.createObjectURL(file),image=new Image();
+ image.onload=()=>{const scale=Math.min(1,1200/Math.max(image.width,image.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);
+ const data=canvas.toDataURL('image/jpeg',.75);galleryPhotos.unshift(data);igDraftPhoto=0;igRenderPhotoPicker();igPersistCameraPhotos();};
+ image.onerror=()=>{URL.revokeObjectURL(url);notify('사진을 불러올 수 없어요')};image.src=url;};input.click();
+}
+function igPersistCameraPhotos(){try{const captured=galleryPhotos.filter(x=>x.startsWith('data:image/'));localStorage.setItem('igCapturedPhotos',JSON.stringify(captured))}catch(e){notify('사진 저장 공간이 부족할 수 있어요')}}
+const igOriginalGalleryPhotos=galleryPhotos.filter(x=>/^photos\/photo_\d+\.jpg$/.test(x));
+try{const stored=JSON.parse(localStorage.getItem('igCapturedPhotos')||'[]');if(Array.isArray(stored))galleryPhotos.unshift(...stored.filter(x=>typeof x==='string'&&x.startsWith('data:image/')))}catch(e){}
+
 function igStartPost(){igDraftPhoto=-1;igDraftCaption='';igRenderPhotoPicker()}
 function igRenderPhotoPicker(){const imgs=galleryPhotos;const chosen=igDraftPhoto>=0?imgs[igDraftPhoto]:null;
- const page=`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">取消</button><b>새 게시물</b><button class="ig-next" onclick="igGoCaption()">다음</button></div><div class="ig-create-scroll"><div class="ig-create-hero">${chosen?`<img src="${chosen}" alt="선택한 사진">`:'<span style="color:#888">사진을 선택하세요</span>'}</div><div style="padding:12px 14px;font-weight:650">최근 항목 <span style="font-size:12px;color:#888">· 사진 보관함</span></div><div class="ig-create-grid">${imgs.map((url,i)=>`<button class="${i===igDraftPhoto?'chosen':''}" onclick="igDraftPhoto=${i};igRenderPhotoPicker()" aria-label="사진 ${i+1}"><img src="${url}" loading="lazy"></button>`).join('')}</div></div></div>`;
+ const page=`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">取消</button><b>새 게시물</b><button class="ig-next" onclick="igGoCaption()">다음</button></div><div class="ig-create-scroll"><div class="ig-create-hero">${chosen?`<img src="${chosen}" alt="선택한 사진">`:'<span style="color:#888">사진을 선택하세요</span>'}</div><div style="padding:12px 14px;font-weight:650;display:flex;align-items:center;justify-content:space-between">최근 항목 <button onclick="igTakePostPhoto()" style="background:#0095f6;color:white;border:0;border-radius:9px;padding:9px 13px;font-weight:700">📷 사진 촬영</button></div><div class="ig-create-grid">${imgs.map((url,i)=>`<button class="${i===igDraftPhoto?'chosen':''}" onclick="igDraftPhoto=${i};igRenderPhotoPicker()" aria-label="사진 ${i+1}"><img src="${url}" loading="lazy"></button>`).join('')}</div></div></div>`;
  igShowComposer(page)}
 function igShowComposer(markup){document.querySelector('.ig-create-page')?.remove();document.querySelector('.ig-page')?.insertAdjacentHTML('beforeend',markup)}
 function igGoCaption(){if(igDraftPhoto<0){notify('사진을 선택해 주세요.');return}igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igRenderPhotoPicker()">‹ 뒤로</button><b>새 게시물</b><button class="ig-next" onclick="igPreviewDraft()">다음</button></div><div class="ig-create-scroll"><div class="ig-create-caption"><textarea id="ig-new-caption" maxlength="2200" placeholder="문구 입력...">${esc(igDraftCaption)}</textarea><img src="${galleryPhotos[igDraftPhoto]}"></div><div style="padding:17px;color:#555;border-bottom:1px solid #eee">위치 추가　　›</div><div style="padding:17px;color:#555">사람 태그하기　　›</div></div></div>`)}
@@ -1192,19 +1231,18 @@ const igFanComments=[
 ];
 // Small private account: a few ordinary comments per post, with no confirmed identity.
 const igPrivateCommentPool=[
- ['yu._.1107','拍得真好 ㅎㅎ'],
- ['yj._.0531','这张氛围不错ㅋㅋ'],
- ['han._.0105','好看！'],
- ['jii._.0328','这是在哪拍的？'],
- ['km._.1002','下次一起去吧'],
- ['yu._.1107','我喜欢这张🤍'],
- ['yj._.0531','周末过得不错嘛'],
- ['han._.0105','照片好有感觉']
+ ['yu._.1107','照片拍得真好 🤍'],['yj._.0531','拍得真不错哈哈'],
+ ['han._.0105','好有氛围感'],['jii._.0328','哇这张真好看'],
+ ['km._.1002','真可爱哈哈'],['yu._.1107','好喜欢这张'],
+ ['yj._.0531','今天的照片好看'],['han._.0105','氛围感绝了'],
+ ['jii._.0328','也太好看了吧'],['km._.1002','好帅哈哈'],
+ ['small.day_','这张很有感觉'],['blue.room_','可爱死了呜呜'],
+ ['daily.pic_','色调好漂亮'],['mood.7_','好会拍照']
 ];
 function igPrivateFanComments(id){
  const str=String(id);let hash=2166136261;
  for(let i=0;i<str.length;i++){hash=Math.imul(hash^str.charCodeAt(i),16777619)>>>0}
- const count=2+(hash%2), result=[];
+ const count=2+(hash%4), result=[];
  for(let j=0;j<count;j++){
   let index=(hash+j*7+Math.floor(hash/31)*j)%igPrivateCommentPool.length;
   while(result.some(x=>x[0]===igPrivateCommentPool[index][0]))index=(index+1)%igPrivateCommentPool.length;
@@ -1218,11 +1256,11 @@ let igLastRenderedApp=app;
 const igOriginalRenderForEngagement=render;
 render=function(){
  if(igLastRenderedApp==='Instagram'&&app!=='Instagram'){
-  for(const post of igMyPosts){const key='own-'+post.id;if(igEngagementStage[key]==='pending')igEngagementStage[key]='exited'}
+  for(const post of igMyPosts.concat(igShinyuPosts)){const key=post.id.startsWith('shinyu-')?post.id:'own-'+post.id;if(igEngagementStage[key]==='pending')igEngagementStage[key]='exited'}
   save('igEngagementStage',igEngagementStage);
  }
  if(igLastRenderedApp!=='Instagram'&&app==='Instagram'){
-  for(const post of igMyPosts){const key='own-'+post.id;if(igEngagementStage[key]==='exited')igEngagementStage[key]='revealed'}
+  for(const post of igMyPosts.concat(igShinyuPosts)){const key=post.id.startsWith('shinyu-')?post.id:'own-'+post.id;if(igEngagementStage[key]==='exited')igEngagementStage[key]='revealed'}
   save('igEngagementStage',igEngagementStage);
  }
  igLastRenderedApp=app;
@@ -1237,15 +1275,16 @@ function igOfficialCommentBase(index){return igOfficialFanComments(index).length
 function igOpenComments(id){
  const p=igMyPosts.find(q=>'own-'+q.id===id);
  const officialIndex=igFeed.findIndex(q=>q.id===id);
- const privateFans=p?igPrivateVisibleComments(id):[];
+ const shinyuPost=igShinyuPosts.find(q=>q.id===id);
+ const privateFans=p?igPrivateVisibleComments(id):(shinyuPost?(igShinyuCount(shinyuPost)?igShinyuComments(shinyuPost):[]):[]);
  const base=officialIndex>=0?igOfficialCommentBase(officialIndex):privateFans.length;
  const list=(comments[id]||[]);
  const officialFans=officialIndex>=0?igOfficialFanComments(officialIndex):[];
  const fanRows=officialIndex>=0?officialFans:privateFans;
- igShowComposer(`<div class="ig-create-page ig-comment-overlay"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>댓글</b><span></span></div><div class="ig-create-scroll ig-comment-list"><div class="ig-comment-summary">댓글 ${base+list.length}개</div>${officialIndex>=0?`<div class="ig-comment-item"><span class="ig-avatar">TWS:</span><div><b>tws_pledis</b><p>${esc(igFeed[officialIndex].caption)}</p><small>只属于 USER 和申惟</small></div></div>`:''}${fanRows.map(([user,msg],j)=>`<div class="ig-comment-item"><span class="ig-avatar ig-fan-avatar" style="background:hsl(${(j*47+(officialIndex>=0?officialIndex:13)*29)%360} 35% 86%);color:#414141">${esc(user.slice(0,1).toUpperCase())}</span><div><b>${esc(user)}</b><p>${esc(msg)}</p><small>${officialIndex>=0?(j%3===0?'2일':j%3===1?'1일':'18시간'):(j%2===0?'3시간':'1시간')} · 좋아요 ${officialIndex>=0?8+j*7:1+j*2}개 · 답글 달기</small></div></div>`).join('')}${list.map(t=>`<div class="ig-comment-item"><span class="ig-avatar ig-own-avatar">☁️</span><div><b>may31.archive</b><p>${esc(t)}</p><small>방금 전</small></div></div>`).join('')}</div><form class="ig-comment-form" onsubmit="igSubmitComment(event,'${id}')"><span class="ig-avatar ig-own-avatar">☁️</span><input id="ig-comment-input" placeholder="댓글 달기..." maxlength="500" autocomplete="off"><button type="submit">게시</button></form></div>`)
+ igShowComposer(`<div class="ig-create-page ig-comment-overlay"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>댓글</b><span></span></div><div class="ig-create-scroll ig-comment-list"><div class="ig-comment-summary">댓글 ${base+list.length}개</div>${officialIndex>=0?`<div class="ig-comment-item"><span class="ig-avatar">TWS:</span><div><b>tws_pledis</b><p>${esc(igFeed[officialIndex].caption)}</p><small>只属于 USER 和申惟</small></div></div>`:''}${fanRows.map(([user,msg],j)=>`<div class="ig-comment-item"><span class="ig-avatar ig-fan-avatar ig-default-person"></span><div><b>${esc(user)}</b><p>${esc(msg)}</p><small>${officialIndex>=0?(j%3===0?'2일':j%3===1?'1일':'18시간'):(j%2===0?'3시간':'1시간')} · 좋아요 ${officialIndex>=0?8+j*7:1+j*2}개 · 답글 달기</small></div></div>`).join('')}${list.map(t=>`<div class="ig-comment-item"><span class="ig-avatar ig-own-avatar">☁️</span><div><b>may31.archive</b><p>${esc(t)}</p><small>방금 전</small></div></div>`).join('')}</div><form class="ig-comment-form" onsubmit="igSubmitComment(event,'${id}')"><span class="ig-avatar ig-own-avatar">☁️</span><input id="ig-comment-input" placeholder="댓글 달기..." maxlength="500" autocomplete="off"><button type="submit">게시</button></form></div>`)
 }
 function igSubmitComment(e,id){e.preventDefault();const v=document.getElementById('ig-comment-input')?.value.trim();if(!v)return;(comments[id]??=[]).push(v);save('comments',comments);igCommentCounts[id]=comments[id].length;save('igCommentCounts',igCommentCounts);igOpenComments(id)}
-function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='profile'?renderPrivateIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igMyPosts.map((p,i)=>igOwnArticle(p,i)).join('')}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab!=='profile'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button title="Reels">▣</button><button title="DM">➤</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
+function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='profile'?renderPrivateIG():igTab==='shinyu'?renderShinyuIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igMyPosts.map((p,i)=>igOwnArticle(p,i)).join('')}${igShinyuPosts.slice(0,3).map((p,i)=>igShinyuArticle(p,i)).join('')}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab!=='profile'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button title="Reels">▣</button><button onclick="igTab='shinyu';render()" title="申惟的小号">☁️</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
 let igStoryIndex=0,igStoryStarted=0,igStoryTimer=null,igStoryPaused=false;
 function closeIGStory(){if(igStoryTimer){clearInterval(igStoryTimer);igStoryTimer=null}igStoryPaused=false;render()}
 function openIGStory(i=0){
