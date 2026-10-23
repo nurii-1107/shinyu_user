@@ -1628,7 +1628,7 @@ if(b)b.classList.toggle('low',level<=20||!!v.lowpower);
 if(b)b.classList.toggle('charging',!!v.charging);
 if(t)t.textContent=level+'%';
 }
-function updateClocks(){updateStatusIndicators();let d=new Date(),hm=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});$('#statusTime').textContent=hm;let l=$('#locktime');if(l)l.textContent=hm;let ld=$('#lockdate');if(ld)ld.textContent='20xx年10月24日';let sw=$('#swdisplay');if(sw)sw.textContent=fmt(elapsed());let td=$('#timerDisplay');if(td){let v=timerOn?Math.max(0,timerEnd-Date.now()):timerLeft;if(timerOn&&v===0){timerOn=false;timerLeft=0;notify('카운트다운 종료')}td.textContent=`${String(Math.floor(v/60000)).padStart(2,'0')}:${String(Math.floor(v/1000)%60).padStart(2,'0')}`}for(let [id,tz] of [['seoul','Asia/Seoul'],['tokyo','Asia/Tokyo'],['ny','America/New_York']]){let e=$('#'+id);if(e)e.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'})}[['Asia/Seoul','clock-city-0'],['Asia/Tokyo','clock-city-1'],['America/New_York','clock-city-2'],['Europe/London','clock-city-3']].forEach(([tz,id],i)=>{let el=document.getElementById(id);if(el)el.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'});let off=document.getElementById('clock-offset-'+i);if(off){let hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',hourCycle:'h23'}).format(d));let local=d.getHours();let diff=(hour-local+36)%24-12;off.textContent=(diff===0?'오늘':diff>0?'오늘 · +'+diff+'시간':'오늘 · '+diff+'시간')}});document.querySelectorAll('.clock-svg-hour').forEach(el=>el.setAttribute('transform',`rotate(${(d.getHours()%12+d.getMinutes()/60)*30} 32 32)`));document.querySelectorAll('.clock-svg-minute').forEach(el=>el.setAttribute('transform',`rotate(${(d.getMinutes()+d.getSeconds()/60)*6} 32 32)`));document.querySelectorAll('.clock-svg-second').forEach(el=>el.setAttribute('transform',`rotate(${(d.getSeconds()+d.getMilliseconds()/1000)*6} 32 32)`));document.querySelectorAll('.iconclock').forEach(el=>{let h=d.getHours()%12+d.getMinutes()/60,m=d.getMinutes()+d.getSeconds()/60,s=d.getSeconds();el.querySelector('.hour').style.transform=`translateX(-50%) rotate(${h*30}deg)`;el.querySelector('.minute').style.transform=`translateX(-50%) rotate(${m*6}deg)`;el.querySelector('.second').style.transform=`translateX(-50%) rotate(${s*6}deg)`})}setInterval(updateClocks,50);render();
+function updateClocks(){updateStatusIndicators();let d=window.getStoryTime?window.getStoryTime():new Date(),hm=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});$('#statusTime').textContent=hm;let l=$('#locktime');if(l)l.textContent=hm;let ld=$('#lockdate');if(ld)ld.textContent='20xx年10月24日';let sw=$('#swdisplay');if(sw)sw.textContent=fmt(elapsed());let td=$('#timerDisplay');if(td){let v=timerOn?Math.max(0,timerEnd-Date.now()):timerLeft;if(timerOn&&v===0){timerOn=false;timerLeft=0;notify('카운트다운 종료')}td.textContent=`${String(Math.floor(v/60000)).padStart(2,'0')}:${String(Math.floor(v/1000)%60).padStart(2,'0')}`}for(let [id,tz] of [['seoul','Asia/Seoul'],['tokyo','Asia/Tokyo'],['ny','America/New_York']]){let e=$('#'+id);if(e)e.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'})}[['Asia/Seoul','clock-city-0'],['Asia/Tokyo','clock-city-1'],['America/New_York','clock-city-2'],['Europe/London','clock-city-3']].forEach(([tz,id],i)=>{let el=document.getElementById(id);if(el)el.textContent=d.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'});let off=document.getElementById('clock-offset-'+i);if(off){let hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',hourCycle:'h23'}).format(d));let local=d.getHours();let diff=(hour-local+36)%24-12;off.textContent=(diff===0?'오늘':diff>0?'오늘 · +'+diff+'시간':'오늘 · '+diff+'시간')}});document.querySelectorAll('.clock-svg-hour').forEach(el=>el.setAttribute('transform',`rotate(${(d.getHours()%12+d.getMinutes()/60)*30} 32 32)`));document.querySelectorAll('.clock-svg-minute').forEach(el=>el.setAttribute('transform',`rotate(${(d.getMinutes()+d.getSeconds()/60)*6} 32 32)`));document.querySelectorAll('.clock-svg-second').forEach(el=>el.setAttribute('transform',`rotate(${(d.getSeconds()+d.getMilliseconds()/1000)*6} 32 32)`));document.querySelectorAll('.iconclock').forEach(el=>{let h=d.getHours()%12+d.getMinutes()/60,m=d.getMinutes()+d.getSeconds()/60,s=d.getSeconds();el.querySelector('.hour').style.transform=`translateX(-50%) rotate(${h*30}deg)`;el.querySelector('.minute').style.transform=`translateX(-50%) rotate(${m*6}deg)`;el.querySelector('.second').style.transform=`translateX(-50%) rotate(${s*6}deg)`})}setInterval(updateClocks,50);render();
 
 initIGImages();
 </script><script id="ios-page-scroll-guard-v41">
@@ -1785,6 +1785,7 @@ function birthdayEndCall(){
    window.playKktNotificationSound?.();
    let stack=document.getElementById('group-wish-stack');
    if(!stack){stack=document.createElement('div');stack.id='group-wish-stack';document.getElementById('phone').appendChild(stack);}
+   window.setOct24StoryClock?.(times[i]);
    const card=document.createElement('div');card.className='group-wish-card';card.tabIndex=0;card.setAttribute('role','button');
    card.setAttribute('aria-label','KakaoTalk 申惟 '+lines[i]);
    card.innerHTML='<span class="group-wish-avatar"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="13" r="8"/><path d="M5 38c0-10 6-16 15-16s15 6 15 16z"/></svg><span class="group-wish-talk"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#fee500" d="M0 0h32v32H0z"/><path fill="#332d18" d="M16 6C8.8 6 3 10.4 3 16c0 3.5 2.2 6.6 5.5 8.4L7.3 29l5.3-3.2c1.1.2 2.2.3 3.4.3 7.2 0 13-4.4 13-10S23.2 6 16 6z"/></svg></span></span><span class="group-wish-content"><span class="group-wish-header"><strong>申惟 🤍</strong><small>现在</small></span><span class="group-wish-message">'+lines[i]+'</span></span>';
@@ -2108,7 +2109,7 @@ function changePlayerName(){
    const scroll=document.getElementById('kkt-scroll');if(scroll)scroll.scrollTop=scroll.scrollHeight;
  }
  function room(){return Array.isArray(chats['申惟'])?chats['申惟']:null}
- function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats)}
+ function add(who,t,time){const r=room();if(!r)return;r.push({who,text:t,me:who==='我',date:D,time});save('chats',chats);window.setOct24StoryClock?.(time)}
  function nextReply(){if(!pending.length){waiting=false;refresh();return}
    const [text,time]=pending.shift();add('申惟',text,time);window.playKktNotificationSound?.();
    if(app==='KKT'&&kktRoom==='申惟')renderKKT();
@@ -2203,26 +2204,34 @@ function changePlayerName(){
 </style>
 <script id="story-accelerated-clock">
 (function(){
- const START='shinyu_story_clock_start_v1';
+ const START='shinyu_story_clock_start_v2';
+ const FIXED='shinyu_story_fixed_time_v2';
  const STAGE='shinyu_oct24_interactive_stage_v1';
- const CALL='shinyu_oct24_call_state_v1';
- const BASE=Date.parse('2026-10-24T17:07:00');
+ const CALL='shinyu_oct24_call_state_v2';
+ const BASE=Date.parse('2026-10-24T16:42:00');
+ const ACCEL_BASE=Date.parse('2026-10-24T17:07:00');
  const TARGET=Date.parse('2026-10-24T19:30:00');
  const TOTAL=10;
  function getStart(){const n=Number(localStorage.getItem(START));return Number.isFinite(n)&&n>0?n:0}
  function readCall(){try{return JSON.parse(localStorage.getItem(CALL)||'null')}catch(e){return null}}
  function saveCall(c){localStorage.setItem(CALL,JSON.stringify(c))}
  function nowStory(){
-  const start=getStart();if(!start)return BASE;
+  const start=getStart();if(!start)return Number(localStorage.getItem(FIXED))||BASE;
   const c=readCall();
   if(c){
    if(c.status==='ringing')return TARGET;
    if(c.status==='active')return TARGET+Math.max(0,Date.now()-c.answeredAt);
    if(c.status==='ended')return c.storyAtEnd+Math.max(0,Date.now()-c.endedAt)*120;
   }
-  return BASE+Math.max(0,Date.now()-start)*120;
+  return ACCEL_BASE+Math.max(0,Date.now()-start)*120;
  }
  window.getStoryTime=()=>new Date(nowStory());
+ window.setOct24StoryClock=function(hm){
+  if(getStart()||readCall()||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(hm))return;
+  const stamp=Date.parse('2026-10-24T'+hm+':00');
+  const prior=Number(localStorage.getItem(FIXED))||BASE;
+  if(stamp>=prior){localStorage.setItem(FIXED,String(stamp));refresh()}
+ }; 
  window.startStoryAcceleratedClock=function(){
   if(getStart())return;
   localStorage.setItem(START,String(Date.now()));refresh();
@@ -2245,8 +2254,8 @@ function changePlayerName(){
   const t=nowStory();c.status='ended';c.storyAtEnd=t;c.endedAt=Date.now();saveCall(c);callOverlay();refresh();
  };
  function refresh(){
-  const start=getStart();if(!start)return;
-  if(!readCall()&&BASE+Math.max(0,Date.now()-start)*120>=TARGET){
+  const start=getStart();
+  if(start&&!readCall()&&ACCEL_BASE+Math.max(0,Date.now()-start)*120>=TARGET){
    saveCall({status:'ringing'});
   }
   const storyDate=new Date(nowStory());
