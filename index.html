@@ -2814,6 +2814,16 @@ simRestoreShots();
      }
      put('clock_fix_v2',1);
    }
+   // Migration: old builds could skip the 21:30 event and save an already-finished clock.
+   // Resume unfinished IG stories at 21:30 without wiping any other local save.
+   if(!get('clock_fix_v3')){
+     if(!get('user_posted') && (base>=T2200 || get('at_2130') || get('ending_dismissed'))){
+       put('at_2130',Date.now());put('notified',0);put('ending_dismissed',0);
+       replyAt=Date.now()-Math.round((T2130-T1940)/120);
+       put('reply_finished_at',replyAt);put('after_reply',replyAt);
+     }
+     put('clock_fix_v3',1);
+   }
    if(!get('after_reply'))put('after_reply',replyAt);
    const accelerated=T1940+Math.max(0,Date.now()-replyAt)*120;
    if(accelerated<T2130)return accelerated;
@@ -2823,7 +2833,7 @@ simRestoreShots();
      put('at_2130',Date.now()-over);
    }
    const slow=T2130+Math.max(0,Date.now()-get('at_2130'));
-   if(!get('user_posted'))return Math.min(T2200-1000,slow);
+   if(!get('user_posted'))return Math.min(T2130+60000,slow);
    if(!get('after_post')){
      put('after_post',Date.now());put('post_clock_base',Math.max(T2130,slow));
    }
@@ -2854,7 +2864,7 @@ simRestoreShots();
  const oldRenderIG=window.renderIG;
  window.renderIG=function(...args){ensureShinyuPost();return oldRenderIG.apply(this,args)};
  function showNotice(){
-   const phone=document.getElementById('phone');if(!phone||document.getElementById('dq-night-notice')||get('notified')||get('user_posted'))return;
+   const phone=document.getElementById('phone');if(!phone||document.getElementById('dq-night-notice')||get('user_posted'))return;
    put('notified',1);
    const el=document.createElement('div');el.id='dq-night-notice';el.innerHTML='<b>📱 系统提醒</b>现在可以打开 Instagram 发帖子啦 ♡';
    el.onclick=()=>{el.remove();if(window.playerNameConfirmed){app='Instagram';igTab='feed';render()}};
@@ -2882,6 +2892,39 @@ simRestoreShots();
  }
  setInterval(check,300);
  window.addEventListener('pageshow',()=>setTimeout(check,300));
+})();
+</script>
+
+<script id="dq-kkt-latest-preview-fix">
+(function(){
+  function latestPreview(){
+    const replyCount=Number(localStorage.getItem('shinyu_1940_user_replied')||0);
+    if(replyCount>=2)return '下来了😊';
+    if(replyCount>=1)return '好';
+    if(localStorage.getItem('shinyu_1940_voice_sent'))return '[语音消息]';
+    if(localStorage.getItem('shinyu_1940_text_sent'))return '下来吧';
+    const items=(typeof chats!=='undefined'&&chats['申惟'])||[];
+    const last=items[items.length-1];
+    return last?(last.image?'[照片]':last.text||''):'暂无聊天记录';
+  }
+  const previous=window.kktRows;
+  if(typeof previous!=='function')return;
+  window.kktRows=function(...args){
+    const markup=previous.apply(this,args);
+    if(typeof kktTab==='undefined'||(kktTab!=='chats'&&kktTab!=='friends'))return markup;
+    const last=latestPreview();
+    // Change only the preview under the one existing contact, not the chat messages.
+    return markup.replace(/(<b>申惟 🤍<\/b><small>)[\s\S]*?(<\/small>)/,(_,a,b)=>a+esc(last)+b);
+  };
+  const oldRender=window.renderKKT;
+  if(typeof oldRender==='function')window.renderKKT=function(...args){
+    const result=oldRender.apply(this,args);
+    if(typeof kktRoom!=='undefined'&&!kktRoom){
+      const small=document.querySelector('.kkt-contact-info small');
+      if(small)small.textContent=latestPreview();
+    }
+    return result;
+  };
 })();
 </script>
 </body></html>
