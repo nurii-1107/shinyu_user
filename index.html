@@ -2834,13 +2834,14 @@ simRestoreShots();
    if(!replied)return Math.min(T1940,base);
    // Movie chapter: the game clock must not advance until the player finishes the video.
    // Existing saves which already completed the 21:30 IG story keep their progress.
-   if(!get('movie_finished') && !get('user_posted'))return T1950; // after both replies, the movie scene begins at 19:50
-   if(get('movie_finished') && !get('user_posted')){
+   if(!get('movie_finished'))return T1950; // after both replies, the movie scene begins at 19:50
+   if(get('movie_finished') && !get('movie_2130_reached')){
      let movieAt=get('movie_finished_at');
      if(!movieAt || movieAt>Date.now()){movieAt=Date.now();put('movie_finished_at',movieAt)}
      const movieClock=T2115+Math.max(0,Date.now()-movieAt)*120;
      if(movieClock<T2130)return movieClock;
      if(!get('at_2130'))put('at_2130',Date.now());
+     put('movie_2130_reached',1);
      return T2130;
    }
    // Anchor acceleration to the moment the PLAYER sends the second reply.
@@ -2950,7 +2951,7 @@ simRestoreShots();
      const video=el.querySelector('video');
      video.addEventListener('ended',()=>{
        put('movie_finished',1);put('movie_finished_at',Date.now());
-       put('at_2130',0);put('notified',0);
+       put('at_2130',0);put('notified',0);put('movie_2130_reached',0);
        el.remove();
        if(typeof home==='function')home();
        check();
@@ -2966,7 +2967,7 @@ simRestoreShots();
  function check(){
    if(!window.playerNameConfirmed)return;
    const hasReplied=Number(localStorage.getItem('shinyu_1940_user_replied')||0)>=2;
-   if(hasReplied && !get('movie_finished') && !get('user_posted')){showMoviePrompt();return;}
+   if(hasReplied && !get('movie_finished')){showMoviePrompt();return;}
    const t=timeMs();
    if(t>=T2130){ensureShinyuPost();if(!get('user_posted'))showNotice();if(lastStage===0&&app==='Instagram'&&typeof renderIG==='function')renderIG();lastStage=1}
    if(t>=T2200&&get('user_posted')&&typeof igMyPosts!=='undefined'&&igMyPosts.some(p=>p.id==='dq-2130-user'))showEnding();
