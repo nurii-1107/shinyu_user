@@ -1575,14 +1575,18 @@ const initialPhoneRecents=[
 {name:'申惟',number:'003',time:'2026-10-24T15:24:00',type:'incoming'},
 {name:'妈妈',number:'001',time:'2026-10-23T20:12:00',type:'incoming'},
 {name:'上司',number:'004',time:'2026-10-23T17:08:00',type:'missed'},
+{name:'快递配送',number:'010-****-6821',time:'2026-10-23T12:36:00',type:'incoming'},
 {name:'申惟',number:'003',time:'2026-10-22T21:37:00',type:'outgoing'},
 {name:'爸爸',number:'002',time:'2026-10-22T18:45:00',type:'incoming'},
+{name:'疑似骚扰电话',number:'02-****-4198',time:'2026-10-22T14:09:00',type:'missed'},
 {name:'上司',number:'004',time:'2026-10-21T09:05:00',type:'incoming'},
 {name:'申惟',number:'003',time:'2026-10-20T19:14:00',type:'incoming'},
 {name:'妈妈',number:'001',time:'2026-10-19T20:36:00',type:'outgoing'},
+{name:'快递员',number:'010-****-7352',time:'2026-10-19T16:21:00',type:'missed'},
 {name:'申惟',number:'003',time:'2026-10-18T22:20:00',type:'outgoing'},
 {name:'上司',number:'004',time:'2026-10-17T16:42:00',type:'missed'},
 {name:'爸爸',number:'002',time:'2026-10-16T18:51:00',type:'outgoing'},
+{name:'广告推销',number:'070-****-2046',time:'2026-10-16T11:18:00',type:'missed'},
 {name:'申惟',number:'003',time:'2026-10-15T08:44:00',type:'incoming'},
 {name:'妈妈',number:'001',time:'2026-10-13T12:20:00',type:'incoming'}
 ];
@@ -1594,6 +1598,18 @@ if(!localStorage.getItem('phoneRecents_user_family_work_v1')){
  phoneRecents=initialPhoneRecents.concat(additional).slice(0,25);
  save('phoneRecents',phoneRecents);
  localStorage.setItem('phoneRecents_user_family_work_v1','1');
+}
+// Merge the added everyday calls into existing saves without erasing real gameplay calls.
+if(!localStorage.getItem('phoneRecents_everyday_calls_v2')){
+ const seen=new Set((Array.isArray(phoneRecents)?phoneRecents:[]).map(p=>String(p.name)+'|'+String(p.time)));
+ for(const entry of initialPhoneRecents){
+  const key=entry.name+'|'+entry.time;
+  if(!seen.has(key)){phoneRecents.push({...entry});seen.add(key);}
+ }
+ phoneRecents.sort((a,b)=>new Date(b.time)-new Date(a.time));
+ phoneRecents=phoneRecents.slice(0,25);
+ save('phoneRecents',phoneRecents);
+ localStorage.setItem('phoneRecents_everyday_calls_v2','1');
 }
 function phoneRecentDate(stamp){
  const d=new Date(stamp);if(isNaN(d.getTime()))return '';
@@ -1723,9 +1739,16 @@ screen(`<div class="iossettings">${settingsPage==='root'?'':`<button class="stba
 const galleryPhotos=["photos/01.jpeg", "photos/02.jpeg", "photos/03.jpeg", "photos/04.jpeg", "photos/05.jpeg", "photos/06.jpeg", "photos/07.jpeg", "photos/08.jpeg", "photos/09.jpeg", "photos/10.jpeg", "photos/11.jpeg", "photos/12.jpeg", "photos/13.jpeg", "photos/14.jpeg", "photos/15.jpeg", "photos/16.jpeg", "photos/17.jpeg", "photos/18.jpeg", "photos/19.jpeg", "photos/20.jpeg", "photos/21.jpeg", "photos/22.jpeg", "photos/23.jpeg", "photos/24.jpeg", "photos/25.jpeg", "photos/26.jpeg", "photos/27.jpeg", "photos/28.jpeg", "photos/29.jpeg", "photos/30.jpeg", "photos/31.jpeg", "photos/32.jpeg", "photos/33.jpeg", "photos/34.jpeg", "photos/35.jpeg", "photos/36.jpeg", "photos/37.png", "photos/38.jpeg", "photos/39.jpeg", "photos/40.jpeg", "photos/41.jpeg"];
 // Fixed ending photo: camera captures must never replace the WVS story image.
 const wvsFixedStoryPhoto="";
-function renderPhotos(){galleryIndex=-1;screen(`<div class="page" style="min-height:100%;background:#fff"><div style="padding:8px 18px 13px"><div style="font-size:31px;font-weight:750;letter-spacing:-1px">照片</div><div style="font-size:13px;color:#777;margin-top:3px">图库 · ${galleryPhotos.length} 张照片</div></div>${galleryPhotos.length?`<div class="gallery-grid">${galleryPhotos.map((f,i)=>`<button onclick="openGalleryPhoto(${i})" aria-label="查看照片 ${i+1}"><img loading="lazy" src="${f}" alt="照片 ${i+1}"></button>`).join('')}</div>`:`<div style="text-align:center;padding:100px 20px;color:#8e8e93"><div style="font-size:44px;margin-bottom:14px">▧</div><div style="font-size:18px;font-weight:600;color:#444">暂无照片</div><div style="font-size:13px;margin-top:10px">以后可以添加属于 USER 的照片 ♡</div></div>`}</div>`)}
+function galleryImageFallback(img){
+  if(!img||img.dataset.galleryFallback==='1')return;
+  img.dataset.galleryFallback='1';
+  const original=img.getAttribute('src')||'';
+  const match=original.match(/(?:^|\/)photos\/(\d+\.jpe?g)(?:[?#].*)?$/i);
+  if(match)img.src='https://nurii-1107.github.io/shinyu_user/photos/'+match[1];
+}
+function renderPhotos(){galleryIndex=-1;screen(`<div class="page" style="min-height:100%;background:#fff"><div style="padding:8px 18px 13px"><div style="font-size:31px;font-weight:750;letter-spacing:-1px">照片</div><div style="font-size:13px;color:#777;margin-top:3px">图库 · ${galleryPhotos.length} 张照片</div></div>${galleryPhotos.length?`<div class="gallery-grid">${galleryPhotos.map((f,i)=>`<button onclick="openGalleryPhoto(${i})" aria-label="查看照片 ${i+1}"><img loading="eager" decoding="async" src="${f}" onerror="galleryImageFallback(this)" alt="照片 ${i+1}"></button>`).join('')}</div>`:`<div style="text-align:center;padding:100px 20px;color:#8e8e93"><div style="font-size:44px;margin-bottom:14px">▧</div><div style="font-size:18px;font-weight:600;color:#444">暂无照片</div><div style="font-size:13px;margin-top:10px">以后可以添加属于 USER 的照片 ♡</div></div>`}</div>`)}
 function openGalleryPhoto(i){galleryIndex=Math.max(0,Math.min(galleryPhotos.length-1,i));showGalleryPhoto()}
-function showGalleryPhoto(){const existing=document.querySelector('.gallery-viewer');if(existing)existing.remove();const viewer=document.createElement('div');viewer.className='gallery-viewer';viewer.innerHTML=`<div class="gallery-top"><button onclick="closeGalleryPhoto()">‹ 뒤로</button><span>${galleryIndex+1} / ${galleryPhotos.length}</span><span style="width:40px"></span></div><div class="gallery-image"><img src="${galleryPhotos[galleryIndex]}" alt="사진 ${galleryIndex+1}"></div><div class="gallery-foot">좌우로 쓸어 사진 전환</div>`;document.querySelector('#phone').appendChild(viewer);let startX=0;viewer.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});viewer.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-startX;if(Math.abs(d)>45){galleryIndex=Math.max(0,Math.min(galleryPhotos.length-1,galleryIndex+(d<0?1:-1)));showGalleryPhoto()}},{passive:true})}
+function showGalleryPhoto(){const existing=document.querySelector('.gallery-viewer');if(existing)existing.remove();const viewer=document.createElement('div');viewer.className='gallery-viewer';viewer.innerHTML=`<div class="gallery-top"><button onclick="closeGalleryPhoto()">‹ 뒤로</button><span>${galleryIndex+1} / ${galleryPhotos.length}</span><span style="width:40px"></span></div><div class="gallery-image"><img src="${galleryPhotos[galleryIndex]}" onerror="galleryImageFallback(this)" alt="照片 ${galleryIndex+1}"></div><div class="gallery-foot">좌우로 쓸어 사진 전환</div>`;document.querySelector('#phone').appendChild(viewer);let startX=0;viewer.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});viewer.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-startX;if(Math.abs(d)>45){galleryIndex=Math.max(0,Math.min(galleryPhotos.length-1,galleryIndex+(d<0?1:-1)));showGalleryPhoto()}},{passive:true})}
 function closeGalleryPhoto(){document.querySelector('.gallery-viewer')?.remove();galleryIndex=-1}
 function updateStatusIndicators(){
 const v=typeof settingsValues==='object'&&settingsValues?settingsValues:{};
