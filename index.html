@@ -1084,7 +1084,7 @@ function cameraTakePhoto(){
  const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
  const context=c.getContext('2d');if(cameraFacing==='user'){context.translate(c.width,0);context.scale(-1,1)}
  context.drawImage(v,0,0,c.width,c.height);
- const data=c.toDataURL('image/jpeg',.78);galleryPhotos.splice(1,0,data);
+ const data=c.toDataURL('image/jpeg',.78);galleryPhotos.splice(1,0,data);const shotId=String(Date.now())+'-'+Math.random().toString(36).slice(2);simShotIds.set(data,shotId);simStoreShot(shotId,data).then(ok=>{if(!ok)notify('照片存储失败，请检查浏览器存储空间')});
  const flash=document.createElement('div');flash.className='sim-camera-flash';document.querySelector('.sim-camera')?.appendChild(flash);setTimeout(()=>flash.remove(),190);
  const thumb=document.querySelector('.sim-camera-thumb');if(thumb){thumb.innerHTML=`<img src="${data}" alt="최근 사진">`}
 }
@@ -1181,11 +1181,47 @@ const igShinyuInitialPosts=[
 ];
 // This is USER's phone and USER's Instagram. Shinyu's posts belong to his own account.
 const igShinyuPosts=igShinyuInitialPosts;
-let igMyPosts=load('igMyPosts',[]);
-if(!Array.isArray(igMyPosts))igMyPosts=[];
+// Persistent camera photographs use IndexedDB (large images should not fill localStorage).
+const simShotIds=new Map();
+const simPhotoDB=(()=>{
+  if(!window.indexedDB)return Promise.resolve(null);
+  return new Promise(resolve=>{
+    try{const r=indexedDB.open('diaoqi_sim_photos',1);
+      r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('shots'))r.result.createObjectStore('shots',{keyPath:'id'})};
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>resolve(null);
+    }catch(e){resolve(null)}
+  });
+})();
+async function simStoreShot(id,data){
+  const db=await simPhotoDB;if(!db)return false;
+  return new Promise(resolve=>{try{const tx=db.transaction('shots','readwrite');tx.objectStore('shots').put({id,data});tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false)}catch(e){resolve(false)}});
+}
+async function simRestoreShots(){
+  const db=await simPhotoDB;if(!db)return;
+  const shots=await new Promise(resolve=>{try{const tx=db.transaction('shots','readonly');const r=tx.objectStore('shots').getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>resolve([])}catch(e){resolve([])}});
+  const sorted=shots.filter(x=>x&&typeof x.data==='string').sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  sorted.forEach((x,i)=>{simShotIds.set(x.data,x.id);if(!galleryPhotos.includes(x.data))galleryPhotos.splice(1+i,0,x.data)});
+  if(typeof igMyPosts!=='undefined'){
+    igMyPosts.forEach(p=>{if(typeof p.image==='string'&&p.image.startsWith('simshot://')){const found=sorted.find(x=>x.id===p.image.slice(10));if(found)p.image=found.data}});
+  }
+  if(window.playerNameConfirmed&&app==='照片')render();
+}
+function simPersistIGPosts(){
+  const items=igMyPosts.map(p=>{
+    const copy={...p};
+    if(typeof copy.image==='string'&&copy.image.startsWith('data:image/')){
+      let id=simShotIds.get(copy.image);
+      if(!id){id=String(Date.now())+'-'+Math.random().toString(36).slice(2);simShotIds.set(copy.image,id);simStoreShot(id,copy.image)}
+      copy.image='simshot://'+id;
+    }
+    return copy;
+  });
+  save('igMyPosts',items);
+}
+let igMyPosts=load('igMyPosts',[]); if(!Array.isArray(igMyPosts))igMyPosts=[]; try{const legacy=JSON.parse(localStorage.getItem('igMyPosts')||'[]');if(Array.isArray(legacy)&&legacy.length>igMyPosts.length)igMyPosts=legacy}catch(e){}
 // Migrate posts that an earlier version incorrectly inserted into USER's account.
 igMyPosts=igMyPosts.filter(p=>!String(p.id||'').startsWith('shinyu-gallery-'));
-save('igMyPosts',igMyPosts);
+simPersistIGPosts();
 if(typeof igKnownStories!=='undefined'){
  if(igKnownStories[0]){igKnownStories[0].image='';igKnownStories[0].label='USER'}
  const friend=igKnownStories.find(x=>x.name==='yu._.1107');
@@ -1199,7 +1235,7 @@ function igRenderPhotoPicker(){const imgs=galleryPhotos;const chosen=igDraftPhot
 function igShowComposer(markup){document.querySelector('.ig-create-page')?.remove();document.querySelector('.ig-page')?.insertAdjacentHTML('beforeend',markup)}
 function igGoCaption(){if(igDraftPhoto<0){notify('사진을 선택해 주세요.');return}igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igRenderPhotoPicker()">‹ 뒤로</button><b>새 게시물</b><button class="ig-next" onclick="igPreviewDraft()">다음</button></div><div class="ig-create-scroll"><div class="ig-create-caption"><textarea id="ig-new-caption" maxlength="2200" placeholder="문구 입력...">${esc(igDraftCaption)}</textarea><img src="${galleryPhotos[igDraftPhoto]}"></div><div style="padding:17px;color:#555;border-bottom:1px solid #eee">위치 추가　　›</div><div style="padding:17px;color:#555">사람 태그하기　　›</div></div></div>`)}
 function igPreviewDraft(){igDraftCaption=document.getElementById('ig-new-caption')?.value||'';igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igGoCaption()">‹ 뒤로</button><b>미리보기</b><button class="ig-next" onclick="igPublishDraft()">공유</button></div><div class="ig-create-scroll"><div class="ig-create-preview"><b>yu._.1107</b><div style="height:12px"></div><img src="${galleryPhotos[igDraftPhoto]}"><p style="white-space:pre-wrap">${esc(igDraftCaption)}</p></div></div></div>`)}
-function igPublishDraft(){if(igDraftPhoto<0)return;const item={image:galleryPhotos[igDraftPhoto],caption:igDraftCaption,date:'방금 전',id:Date.now()};igMyPosts.unshift(item);igEngagementStage['own-'+item.id]='pending';save('igEngagementStage',igEngagementStage);try{localStorage.setItem('igMyPosts',JSON.stringify(igMyPosts))}catch(e){notify('저장 공간이 부족해 게시물이 새로고침 후 사라질 수 있어요.')}igTab='feed';renderIG()}
+function igPublishDraft(){if(igDraftPhoto<0)return;const item={image:galleryPhotos[igDraftPhoto],caption:igDraftCaption,date:'방금 전',id:Date.now()};igMyPosts.unshift(item);igEngagementStage['own-'+item.id]='pending';save('igEngagementStage',igEngagementStage);simPersistIGPosts();igTab='feed';renderIG()}
 function igViewOwnPost(i){const p=igMyPosts[i];if(!p)return;igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>게시물</b><span></span></div><div class="ig-create-scroll">${igOwnArticle(p,i)}</div></div>`)}
 let igCommentCounts=load('igCommentCounts',{}),igPostLikes=load('igPostLikes',{});
 function igCount(id,type,base){const extra=type==='comment'?(comments[id]||[]).length:0;return base+extra}
@@ -1209,7 +1245,7 @@ function igShinyuArticle(p,i){const id='own-'+p.id;return `<article class="ig-po
 function igOfficialArticle(p,i){return `<article class="ig-post" id="${p.id}"><div class="ig-post-head"><span class="ig-avatar">TWS:</span><div class="ig-user"><b>tws_pledis</b><span>♬ TWS · original audio</span></div><button class="ig-post-menu" onclick="igOfficialMenu('${p.id}')" aria-label="게시물 옵션">⋯</button></div>${igPhoto(p)}${igActionRow(p.id,true,i)}<div class="ig-copy"><b>tws_pledis</b> ${p.caption}</div><button class="ig-view-comments" onclick="igOpenComments('${p.id}')">댓글 ${igCount(p.id,'comment',igOfficialCommentBase(i))}개 모두 보기</button><div class="ig-date">5월 ${31-Math.min(i,8)}일 · 번역 보기</div></article>`}
 function igOwnMenu(i){const p=igMyPosts[i];if(!p)return;igShowComposer(`<div class="ig-create-page ig-comment-overlay"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>게시물 옵션</b><span></span></div><div class="ig-menu-items"><button onclick="igViewOwnPost(${i})">게시물 보기</button><button onclick="igDeleteOwnPost(${i})" style="color:#ed4956">게시물 삭제</button><button onclick="renderIG()">取消</button></div></div>`)}
 function igOfficialMenu(id){igShowComposer(`<div class="ig-create-page ig-comment-overlay"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>게시물 옵션</b><span></span></div><div class="ig-menu-items"><button onclick="igToggleSave('${id}');renderIG()">저장 ${igSaved[id]?'취소':'하기'}</button><button onclick="renderIG()">取消</button></div></div>`)}
-function igDeleteOwnPost(i){if(!confirm('이 게시물을 삭제할까요?'))return;igMyPosts.splice(i,1);save('igMyPosts',igMyPosts);renderIG()}
+function igDeleteOwnPost(i){if(!confirm('이 게시물을 삭제할까요?'))return;igMyPosts.splice(i,1);simPersistIGPosts();renderIG()}
 // Fictional Korean fan comments for the TWS official Instagram feed.
 const igFanComments=[
   ['bluehour.42','신유 리더 분위기 진짜 미쳤다… 눈빛부터 완벽해 💙'],
@@ -1484,12 +1520,30 @@ if(!localStorage.getItem('shinyu_notes_daily_v1')){
  {title:'工作日常 🗓️',body:'今天要做的事\\n□ 确认练习时间和集合地点\\n□ 排练前热身，保护嗓子\\n□ 和成员们对一遍舞台细节\\n□ 检查明天的行程\\n□ 练习结束后整理东西\\n\\n备忘\\n忙的时候也要好好吃饭。\\n如果结束得早，给她打电话。',group:'7d',edited:Date.now()}
  ];save('notes',notes);localStorage.setItem('shinyu_notes_daily_v1','1');
 }
-let ytTab='home',ytQuery='';
-function renderYouTube(){
- const videos=[['TWS','练习室的一天｜舞台准备记录','音乐 · 12:08','▶'],['音乐推荐','适合回家路上听的歌单','歌单 · 38:24','♫'],['生活记录','下班后简单吃点什么','日常 · 8:16','▸'],['舞台回顾','喜欢的舞台片段合集','音乐 · 15:32','♪']];
- const found=videos.filter(v=>(v.join(' ')).toLowerCase().includes(ytQuery.toLowerCase()));
- screen(`<div style="height:100%;background:#fff;color:#171717;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif"><header style="display:flex;align-items:center;justify-content:space-between;padding:17px 19px 12px;border-bottom:1px solid #eee"><b style="font-size:24px;letter-spacing:-1px"><span style="display:inline-block;background:#ff0033;color:#fff;border-radius:7px;padding:1px 8px;margin-right:5px;font-size:19px">▶</span>YouTube</b><button style="border:0;background:none;font-size:24px" onclick="ytTab=ytTab==='search'?'home':'search';renderYouTube()">⌕</button></header>${ytTab==='search'?`<div style="padding:14px"><input style="width:100%;padding:12px;border-radius:20px;border:1px solid #ddd" placeholder="搜索视频" value="${esc(ytQuery)}" oninput="ytQuery=this.value;renderYouTube()"></div>`:''}<main style="overflow:auto;flex:1;padding:12px 14px">${found.map((v,i)=>`<div style="margin-bottom:21px" onclick="notify('视频预览暂未开放')"><div style="height:156px;border-radius:13px;background:${['#d9e6ed','#dcd7e8','#e8dfd6','#dce7df'][i%4]};display:flex;align-items:center;justify-content:center;font-size:52px;color:#555">${v[3]}</div><div style="display:flex;gap:11px;padding-top:10px"><span style="width:35px;height:35px;border-radius:50%;background:#ececec;display:grid;place-items:center">▶</span><div><b style="font-size:14px">${v[1]}</b><div style="font-size:12px;color:#777;margin-top:5px">${v[0]} · ${v[2]}</div></div></div></div>`).join('')}</main><footer style="display:flex;justify-content:space-around;padding:12px;border-top:1px solid #eee">${[['home','⌂','首页'],['shorts','▣','Shorts'],['subs','▤','订阅'],['you','◉','我的']].map(v=>`<button onclick="ytTab='${v[0]}';renderYouTube()" style="background:none;border:0;font-size:12px;color:${ytTab===v[0]?'#111':'#777'}"><div style="font-size:21px">${v[1]}</div>${v[2]}</button>`).join('')}</footer></div>`);
+let ytTab='home',ytQuery='',ytPlaying=null;
+const ytVideos=[
+ {id:'UvKW3sYNxds',title:'收藏的视频 01'},
+ {id:'4n7hb8X2NP0',title:'收藏的视频 02'},
+ {id:'2UCyK6lyhsM',title:'收藏的视频 03'},
+ {id:'LkbRrm1q9P8',title:'收藏的视频 04'},
+ {id:'90O191z4kcE',title:'收藏的视频 05'}
+];
+let ytHistory=(()=>{try{return JSON.parse(localStorage.getItem('shinyu_yt_history_v1')||'[]')}catch(e){return []}})();
+function ytPlay(id){
+ ytPlaying=id;
+ ytHistory=[id,...ytHistory.filter(x=>x!==id)].slice(0,40);
+ try{localStorage.setItem('shinyu_yt_history_v1',JSON.stringify(ytHistory))}catch(e){}
+ renderYouTube();
 }
+function ytClose(){ytPlaying=null;renderYouTube()}
+function renderYouTube(){
+ const selected=ytVideos.find(v=>v.id===ytPlaying);
+ const videos=ytTab==='you'?ytHistory.map(id=>ytVideos.find(v=>v.id===id)).filter(Boolean):ytVideos;
+ const found=videos.filter(v=>(v.title+' '+v.id).toLowerCase().includes(ytQuery.toLowerCase()));
+ const card=v=>`<div style="margin-bottom:21px;cursor:pointer" onclick="ytPlay('${v.id}')"><div style="height:165px;border-radius:12px;background:#f1f1f1;overflow:hidden;position:relative"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" alt="视频缩略图" style="width:100%;height:100%;object-fit:cover" loading="lazy"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#ff0033;color:white;border-radius:12px;padding:9px 17px;font-size:23px">▶</span></div><div style="display:flex;gap:10px;padding-top:10px"><span style="width:34px;height:34px;border-radius:50%;background:#eee;display:grid;place-items:center">▶</span><div><b style="font-size:14px">${v.title}</b><div style="font-size:12px;color:#777;margin-top:4px">YouTube · 点击播放</div></div></div></div>`;
+ screen(`<div style="height:100%;background:#fff;color:#171717;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif"><header style="display:flex;align-items:center;justify-content:space-between;padding:17px 19px 12px;border-bottom:1px solid #eee"><b style="font-size:24px;letter-spacing:-1px"><span style="display:inline-block;background:#ff0033;color:#fff;border-radius:7px;padding:1px 8px;margin-right:5px;font-size:19px">▶</span>YouTube</b><button style="border:0;background:none;font-size:24px" onclick="ytTab=ytTab==='search'?'home':'search';ytPlaying=null;renderYouTube()">⌕</button></header>${selected?`<main style="flex:1;overflow:auto;padding:12px"><button onclick="ytClose()" style="background:none;border:0;padding:7px 0;font-size:15px">‹ 返回视频列表</button><div style="aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden"><iframe src="https://www.youtube-nocookie.com/embed/${selected.id}?autoplay=1&playsinline=1&rel=0" title="YouTube 视频" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="width:100%;height:100%;border:0"></iframe></div><h3 style="font-size:17px;margin:15px 2px">${selected.title}</h3><p style="font-size:12px;color:#777">如果视频无法在小手机内播放，可以在 YouTube 打开。</p><a href="https://www.youtube.com/watch?v=${selected.id}" target="_blank" rel="noopener noreferrer" style="display:block;background:#f1f1f1;border-radius:18px;padding:12px;text-align:center;color:#111;text-decoration:none">在 YouTube 打开 ↗</a></main>`:`${ytTab==='search'?`<div style="padding:14px"><input id="yt-search" style="width:100%;padding:12px;border-radius:20px;border:1px solid #ddd" placeholder="搜索已添加的视频" value="${esc(ytQuery)}" oninput="ytQuery=this.value;document.getElementById('yt-results').innerHTML=ytVideos.filter(v=>(v.title+' '+v.id).toLowerCase().includes(ytQuery.toLowerCase())).map(ytVideoCard).join('')"></div>`:''}<main id="yt-results" style="overflow:auto;flex:1;padding:12px 14px">${ytTab==='shorts'||ytTab==='subs'?'<p style="text-align:center;color:#888;padding-top:45px">暂无内容</p>':found.length?found.map(card).join(''):'<p style="text-align:center;color:#888;padding-top:45px">暂无观看记录</p>'}</main>`}<footer style="display:flex;justify-content:space-around;padding:12px;border-top:1px solid #eee">${[['home','⌂','首页'],['shorts','▣','Shorts'],['subs','▤','订阅'],['you','◉','我的']].map(v=>`<button onclick="ytTab='${v[0]}';ytPlaying=null;ytQuery='';renderYouTube()" style="background:none;border:0;font-size:12px;color:${ytTab===v[0]?'#111':'#777'}"><div style="font-size:21px">${v[1]}</div>${v[2]}</button>`).join('')}</footer></div>`);
+}
+function ytVideoCard(v){return `<div style="margin-bottom:18px" onclick="ytPlay('${v.id}')"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" style="width:100%;border-radius:12px"><div style="font-size:14px;font-weight:600;margin-top:7px">${v.title} ▶</div></div>`}
 let notesView='list',notesQuery='',activeNote=-1,notesFolder='all';
 function noteText(n){return (n.title||'')+(n.body?'\n'+n.body:'')}
 function noteSaveActive(){if(activeNote<0||!notes[activeNote])return;const el=document.getElementById('iosnote-editor');if(!el)return;const lines=el.value.split('\n');notes[activeNote].title=lines.shift()||'새 메모';notes[activeNote].body=lines.join('\n');notes[activeNote].edited=Date.now();save('notes',notes)}
@@ -2523,9 +2577,10 @@ function changePlayerName(){
  },{capture:true,passive:true});
  document.addEventListener('touchcancel',()=>{start=null},{capture:true,passive:true});
 })();
-</script>
 
-<style id="sim-save-choice-css">
+// Load photos taken in earlier sessions and reconnect them to IG posts.
+simRestoreShots();
+</script>  <style id="sim-save-choice-css">
 #sim-save-choice{position:fixed;inset:0;z-index:2147483647;background:rgba(16,22,34,.77);display:flex;align-items:center;justify-content:center;padding:22px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 #sim-save-choice .save-card{width:min(330px,95vw);padding:28px 22px 22px;border-radius:24px;background:#fff;color:#20232b;text-align:center;box-shadow:0 14px 60px #0005}
 #sim-save-choice h2{font-size:21px;margin:4px 0 12px}
@@ -2554,7 +2609,7 @@ function changePlayerName(){
           if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
         }
       }catch(e){}
-      location.reload();
+      try{simPhotoDB.then(db=>{if(db)db.close();const req=indexedDB.deleteDatabase('diaoqi_sim_photos');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();setTimeout(()=>location.reload(),1200)})}catch(e){location.reload()}
     };
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showChoice,{once:true});else showChoice();
