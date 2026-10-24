@@ -1635,7 +1635,7 @@ content=`<h1 class="phtitle">연락처</h1><input class="phsearch" placeholder="
 }else if(phoneTab==='favorites'){
 content=`<h1 class="phtitle">즐겨찾기</h1>${phonePeople.filter(p=>phoneFavorites.includes(p.name)).map(p=>phoneListRow(p)).join('')||'<p style="color:#999">즐겨찾는 연락처가 없습니다</p>'}`;
 }else if(phoneTab==='recents'){
-content=`<div style="display:flex;justify-content:space-between;align-items:center"><h1 class="phtitle">최근 통화</h1><button class="phlink" onclick="phoneRecents=[];save('phoneRecents',phoneRecents);renderPhone()">지우기</button></div><div style="background:#ececf0;border-radius:10px;padding:9px;text-align:center;margin-bottom:10px">모든 통화</div>${phoneRecents.map(p=>`<div class="phrow"><div style="flex:1;min-width:0"><b style="color:${p.type==='missed'?'#ff3b30':'#171719'}">${esc(p.name)}</b><div class="phmeta">${p.type==='missed'?'부재중 전화':p.type==='outgoing'?'발신 통화':'수신 통화'} · ${phoneRecentDate(p.time)}</div></div><button class="phlink" onclick="phoneStartCall('${esc(p.name)}','${esc(p.number)}')">ⓘ</button></div>`).join('')||'<p style="color:#999;text-align:center;margin-top:70px">최근 통화가 없습니다</p>'}`;
+content=`<div style="display:flex;justify-content:space-between;align-items:center"><h1 class="phtitle">최근 통화</h1><button class="phlink" onclick="phoneRecents=[];save('phoneRecents',phoneRecents);renderPhone()">지우기</button></div><div style="background:#ececf0;border-radius:10px;padding:9px;text-align:center;margin-bottom:10px">모든 통화</div>${phoneRecents.map(p=>`<div class="phrow"><div style="flex:1;min-width:0"><b style="color:${p.type==='missed'?'#ff3b30':'#171719'}">${esc(p.name)}</b><div class="phmeta">${'电话'} · ${phoneRecentDate(p.time)}</div></div><button class="phlink" onclick="phoneStartCall('${esc(p.name)}','${esc(p.number)}')">ⓘ</button></div>`).join('')||'<p style="color:#999;text-align:center;margin-top:70px">최근 통화가 없습니다</p>'}`;
 }else{
 content=`<h1 class="phtitle">음성 사서함</h1><div style="text-align:center;color:#999;margin-top:95px">음성 사서함이 설정되지 않았습니다<br><small></small></div>`;
 }
@@ -2488,15 +2488,37 @@ function changePlayerName(){
   el.replaceChildren(zh);
  }
  window.shinyuAnswerCall=function(){const c=readCall();if(!c||c.status!=='ringing')return;stopRing();stopVoice();c.status='active';c.answeredAt=Date.now();saveCall(c);callOverlay();startVoice();refresh()};
- window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')return;stopRing();stopVoice();
-  const t=nowStory();c.status='ended';c.storyAtEnd=t;c.endedAt=Date.now();saveCall(c);callOverlay();refresh();
+ function saveShinyuStoryRecent(c){
+  // Keep the scripted 19:30 call in the same persisted list as ordinary calls.
+  const flag='shinyu_oct24_1930_recent_saved_v1';
+  if(localStorage.getItem(flag)==='1')return;
+  try{
+    const key='phoneRecents';
+    let list=JSON.parse(localStorage.getItem(key)||'[]');
+    if(!Array.isArray(list))list=[];
+    const stamp='2026-10-24T19:30:00';
+    if(!list.some(x=>x&&x.name==='申惟'&&x.time===stamp)){
+      list.unshift({name:'申惟',number:'003',time:stamp,type:c.answeredAt?'incoming':'missed'});
+      list.sort((a,b)=>new Date(b.time)-new Date(a.time));
+      list=list.slice(0,25);
+      localStorage.setItem(key,JSON.stringify(list));
+    }
+    localStorage.setItem(flag,'1');
+    if(typeof phoneRecents!=='undefined')phoneRecents=list;
+  }catch(e){}
+}
+// Restore the call to old saves where the story call has already finished.
+const previousCall=readCall();
+if(previousCall?.status==='ended')saveShinyuStoryRecent(previousCall);
+window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')return;stopRing();stopVoice();
+  const t=nowStory();c.status='ended';c.storyAtEnd=t;c.endedAt=Date.now();saveCall(c);saveShinyuStoryRecent(c);callOverlay();refresh();
  };
  function refresh(){
   const start=getStart();
   if(start&&!readCall()&&ACCEL_BASE+Math.max(0,Date.now()-start)*120>=TARGET){
    saveCall({status:'ringing'});
   }
-  const storyDate=new Date(nowStory());
+  const storyDate=typeof window.getStoryTime==='function'?window.getStoryTime():new Date(nowStory());
   const hm=String(storyDate.getHours()).padStart(2,'0')+':'+String(storyDate.getMinutes()).padStart(2,'0');
   const status=document.getElementById('statusTime');if(status)status.textContent=hm;
   const lock=document.getElementById('locktime');if(lock)lock.textContent=hm;
@@ -2757,8 +2779,8 @@ simRestoreShots();
    if(accelerated<T2130)return accelerated;
    if(!get('at_2130'))put('at_2130',Date.now());
    if(!get('user_posted'))return T2130+(Date.now()-get('at_2130'));
-   if(!get('after_post'))put('after_post',Date.now());
-   return Math.min(T2200,T2130+(Date.now()-get('after_post'))*120);
+   if(!get('after_post')){put('after_post',Date.now());put('post_clock_base',Math.max(T2130,T2130+(Date.now()-get('at_2130'))));}
+   return Math.min(T2200,(get('post_clock_base')||T2130)+(Date.now()-get('after_post'))*120);
  }
  window.getStoryTime=()=>new Date(timeMs());
  function ensureShinyuPost(){
@@ -2779,7 +2801,7 @@ simRestoreShots();
    const item={id:'dq-2130-user',image:P1,caption:'和申惟看完电影来吃宵夜！😋',date:'10月24日 · 21:30'};
    igMyPosts.unshift(item);
    igEngagementStage['own-'+item.id]='pending';save('igEngagementStage',igEngagementStage);
-   simPersistIGPosts();put('user_posted',Date.now());put('after_post',Date.now());
+   simPersistIGPosts();put('post_clock_base',Math.max(T2130,timeMs()));put('user_posted',Date.now());put('after_post',Date.now());
    igTab='feed';renderIG();
  };
  const oldRenderIG=window.renderIG;
