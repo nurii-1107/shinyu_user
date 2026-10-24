@@ -2833,11 +2833,20 @@ simRestoreShots();
      put('at_2130',Date.now()-over);
    }
    const slow=T2130+Math.max(0,Date.now()-get('at_2130'));
-   if(!get('user_posted'))return Math.min(T2130+60000,slow);
-   if(!get('after_post')){
-     put('after_post',Date.now());put('post_clock_base',Math.max(T2130,slow));
+   // 21:30 is a hard pause until the PLAYER actually publishes the prepared IG post.
+   // Older saves sometimes contain a stale user_posted flag or an old acceleration anchor.
+   const actualNightPost=typeof igMyPosts!=='undefined' && Array.isArray(igMyPosts) && igMyPosts.some(p=>p.id==='dq-2130-user');
+   if(!get('user_posted') || !actualNightPost){
+     if(get('user_posted') && !actualNightPost){put('user_posted',0);put('after_post',0);put('post_clock_base',0)}
+     return T2130; // wait here; never advance to 22:00 before publishing
    }
-   return Math.min(T2200,(get('post_clock_base')||T2130)+Math.max(0,Date.now()-get('after_post'))*120);
+   // Anchor the final 120x segment only to a valid publication timestamp.
+   let publishedAt=get('after_post');
+   if(!publishedAt || publishedAt<get('at_2130') || publishedAt>Date.now()){
+     publishedAt=Date.now();put('after_post',publishedAt);put('post_clock_base',T2130);
+   }
+   const postBase=Math.min(T2200,Math.max(T2130,get('post_clock_base')||T2130));
+   return Math.min(T2200,postBase+Math.max(0,Date.now()-publishedAt)*120);
  }
  window.getStoryTime=()=>new Date(timeMs());
  function ensureShinyuPost(){
@@ -2888,7 +2897,7 @@ simRestoreShots();
    if(!window.playerNameConfirmed)return;
    const t=timeMs();
    if(t>=T2130){ensureShinyuPost();if(!get('user_posted'))showNotice();if(lastStage===0&&app==='Instagram'&&typeof renderIG==='function')renderIG();lastStage=1}
-   if(t>=T2200&&get('user_posted'))showEnding();
+   if(t>=T2200&&get('user_posted')&&typeof igMyPosts!=='undefined'&&igMyPosts.some(p=>p.id==='dq-2130-user'))showEnding();
  }
  setInterval(check,300);
  window.addEventListener('pageshow',()=>setTimeout(check,300));
