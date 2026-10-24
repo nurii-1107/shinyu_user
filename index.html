@@ -1338,7 +1338,27 @@ function igOpenComments(id){
  igShowComposer(`<div class="ig-create-page ig-comment-overlay"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>댓글</b><span></span></div><div class="ig-create-scroll ig-comment-list"><div class="ig-comment-summary">댓글 ${base+list.length}개</div>${officialIndex>=0?`<div class="ig-comment-item"><span class="ig-avatar">TWS:</span><div><b>tws_pledis</b><p>${esc(igFeed[officialIndex].caption)}</p><small>只属于 USER 和申惟</small></div></div>`:''}${fanRows.map(([user,msg],j)=>`<div class="ig-comment-item"><span class="ig-avatar ig-fan-avatar ig-default-avatar"></span><div><b>${esc(user)}</b><p>${esc(msg)}</p><small>${officialIndex>=0?(j%3===0?'2일':j%3===1?'1일':'18시간'):(j%2===0?'3시간':'1시간')} · 좋아요 ${officialIndex>=0?8+j*7:j%2}개 · 답글 달기</small></div></div>`).join('')}${list.map(t=>`<div class="ig-comment-item"><span class="ig-avatar ig-own-avatar">☁️</span><div><b>yu._.1107</b><p>${esc(t)}</p><small>방금 전</small></div></div>`).join('')}</div><form class="ig-comment-form" onsubmit="igSubmitComment(event,'${id}')"><span class="ig-avatar ig-own-avatar">☁️</span><input id="ig-comment-input" placeholder="댓글 달기..." maxlength="500" autocomplete="off"><button type="submit">게시</button></form></div>`)
 }
 function igSubmitComment(e,id){e.preventDefault();const v=document.getElementById('ig-comment-input')?.value.trim();if(!v)return;(comments[id]??=[]).push(v);save('comments',comments);igCommentCounts[id]=comments[id].length;save('igCommentCounts',igCommentCounts);igOpenComments(id)}
-function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='profile'?renderPrivateIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igMyPosts.map((p,i)=>igOwnArticle(p,i)).join('')}${igShinyuPosts.map((p,i)=>igShinyuArticle(p,i)).join('')}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab!=='profile'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button title="Reels">▣</button><button title="DM">➤</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
+// Feed order: the 21:30 story post must appear above USER's earlier posts.
+// Keep original array indices so post menus and deletion still target the right post.
+function igChronologicalFeed(){
+  const entries=[
+    ...igMyPosts.map((p,i)=>({p,i,own:true})),
+    ...igShinyuPosts.map((p,i)=>({p,i,own:false}))
+  ];
+  function order(e){
+    const p=e.p;
+    if(p.id==='dq-2130-user')return 213002;
+    if(p.id==='dq-2130-shinyu')return 213001;
+    // All regular USER posts predate the scripted 21:30 scene.
+    if(e.own)return 200000+Math.min(e.i,999)*-1;
+    const date=String(p.date||'');
+    const m=date.match(/10月(\d{1,2})日/);
+    return m?Number(m[1])*100:100;
+  }
+  entries.sort((a,b)=>order(b)-order(a));
+  return entries.map(e=>e.own?igOwnArticle(e.p,e.i):igShinyuArticle(e.p,e.i)).join('');
+}
+function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='profile'?renderPrivateIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igChronologicalFeed()}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab!=='profile'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button title="Reels">▣</button><button title="DM">➤</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
 let igStoryIndex=0,igStoryStarted=0,igStoryTimer=null,igStoryPaused=false;
 function closeIGStory(){if(igStoryTimer){clearInterval(igStoryTimer);igStoryTimer=null}igStoryPaused=false;render()}
 function openIGStory(i=0){
