@@ -2449,6 +2449,27 @@ function changePlayerName(){
  function startVoice(){const c=readCall();if(c?.status!=='active'||voiceStarted)return;stopRing();callVoice.loop=false;voiceStarted=true;callVoice.play().catch(()=>{voiceStarted=false});}
  ringtone.loop=true;
  ringtone.preload='auto';
+ // On iOS a new game/reload loses autoplay permission. Prime the ringtone
+ // during the player's first real touch, before the scripted call begins.
+ let ringtonePrimed=false;
+ function primeRingtone(){
+  if(ringtonePrimed||readCall()?.status==='ringing')return;
+  ringtonePrimed=true;
+  ringtone.muted=true;
+  const attempt=ringtone.play();
+  if(attempt&&typeof attempt.then==='function'){
+   attempt.then(()=>{
+    ringtone.pause();
+    try{ringtone.currentTime=0}catch(e){}
+    ringtone.muted=false;
+    if(readCall()?.status==='ringing')syncRing();
+   }).catch(()=>{ringtonePrimed=false;ringtone.muted=false});
+  }else{
+   ringtone.pause();ringtone.muted=false;
+  }
+ }
+ ['touchstart','pointerdown','keydown'].forEach(type=>
+  document.addEventListener(type,primeRingtone,{passive:true,capture:true}));
  let ringWanted=false;
  function stopRing(){ringWanted=false;ringtone.pause();try{ringtone.currentTime=0}catch(e){}}
  function syncRing(){
@@ -2456,7 +2477,7 @@ function changePlayerName(){
   if(shouldRing&&!callVoice.paused)stopVoice();
   if(!shouldRing){if(ringWanted||!ringtone.paused)stopRing();return}
   ringWanted=true;
-  if(ringtone.paused)ringtone.play().catch(()=>{});
+  if(ringtone.paused){ringtone.muted=false;ringtone.play().catch(()=>{ringtonePrimed=false});}
  }
  // Mobile Safari can block audio until a user gesture; retry when tapped.
  ['pointerdown','touchstart','keydown'].forEach(evt=>document.addEventListener(evt,()=>{
@@ -2682,7 +2703,7 @@ simRestoreShots();
       try{
         for(let i=localStorage.length-1;i>=0;i--){
           const k=localStorage.key(i);
-          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
+          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
         }
       }catch(e){}
       try{simPhotoDB.then(db=>{if(db)db.close();const req=indexedDB.deleteDatabase('diaoqi_sim_photos');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();setTimeout(()=>location.reload(),1200)})}catch(e){location.reload()}
