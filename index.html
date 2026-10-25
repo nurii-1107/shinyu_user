@@ -3414,21 +3414,17 @@ simRestoreShots();
 <script id="dq-familycard-kkt-trigger">
 (function(){
  const KEY='dq_familycard_kkt_v1';
- window.dqFamilyCardFreeInput=function(){try{return ['waiting1','reply1','waiting2','reply2'].includes(JSON.parse(localStorage.getItem('dq_familycard_kkt_v1')||'null')?.phase)}catch(e){return false}};
  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
  const write=v=>localStorage.setItem(KEY,JSON.stringify(v));
+ const activePhases=['incoming1','input1','incoming2','input2','incoming3','input3'];
+ window.dqFamilyCardFreeInput=()=>activePhases.includes(read()?.phase);
  const stamp=()=>{const d=window.getStoryTime?.()||new Date(2026,9,24);return {date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}};
- function append(lines,mine=false,notifyFirst=true){
-  const st=read();if(!st||st.phase==='done')return;
+ function add(text,mine){
   const t=stamp(),room=chats['申惟']??(chats['申惟']=[]);
-  for(const line of lines)room.push({who:mine?'我':'申惟',text:line,me:mine,date:t.date,time:t.time});
-  save('chats',chats);
+  room.push({who:mine?'我':'申惟',text,me:mine,date:t.date,time:t.time});save('chats',chats);
   if(app==='KKT'&&kktRoom==='申惟')renderKKT();
-  if(!mine&&notifyFirst){
-   // The existing banner plays the KKT chime outside the conversation.
-   // Inside the open chat, the banner is suppressed, so play it here instead.
-   if(app==='KKT'&&kktRoom==='申惟')window.playKktNotificationSound?.();
-   else if(typeof window.showShinyuKktBanner==='function')window.showShinyuKktBanner(lines[0]);
+  if(!mine&&!(app==='KKT'&&kktRoom==='申惟')){
+   if(typeof window.showShinyuKktBanner==='function')window.showShinyuKktBanner(text);
    else window.playKktNotificationSound?.();
   }
  }
@@ -3440,61 +3436,75 @@ simRestoreShots();
   if(now>=Date.parse('2026-10-24T19:40:00')&&Number(localStorage.getItem('shinyu_1940_user_replied')||0)<2)return true;
   return false;
  }
- function start(){
-  const st=read();if(!st||st.phase!=='pending'||Date.now()<st.due||storyBusy())return;
-  window.dqFamilyPauseClock?.();
-  st.phase='waiting1';write(st);
-  append([typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER'),'刚刚用了我的卡吗ㅋㅋ','买了什么呀']);
+ let sequenceTimer=null,waitingTimer=null,typed=0,keyboardOpen=false;
+ function clearSequence(){clearTimeout(sequenceTimer);sequenceTimer=null}
+ function nextLine(){
+  const st=read();if(!st||!st.phase.startsWith('incoming'))return;
+  const group=st.phase==='incoming1'?[typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER'),'刚刚用了我的卡吗ㅋㅋ','买了什么呀']:
+   st.phase==='incoming2'?['哦哦','₩'+Number(st.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝']:
+   ['那就好ㅎㅎ','想买什么就买','不够的话跟我说'];
+  const index=st.line||0;
+  if(index>=group.length){st.phase=st.phase==='incoming1'?'input1':st.phase==='incoming2'?'input2':'input3';st.line=0;write(st);if(app==='KKT'&&kktRoom==='申惟')renderKKT();return}
+  add(group[index],false);st.line=index+1;write(st);
+  sequenceTimer=setTimeout(nextLine,1050);
  }
- let timer=null;
- function schedule(){
-  clearInterval(timer);timer=null;
-  if(read()?.phase!=='pending')return;
-  timer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(timer);timer=null;return}start()},250);
-  start();
+ function start(){const st=read();if(!st||st.phase!=='pending'||Date.now()<st.due||storyBusy())return;
+  window.dqFamilyPauseClock?.();st.phase='incoming1';st.line=0;write(st);nextLine();}
+ function schedule(){clearInterval(waitingTimer);waitingTimer=null;if(read()?.phase!=='pending')return;
+  waitingTimer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(waitingTimer);waitingTimer=null;return}start()},250);start();}
+ window.dqFamilyCardPaid=function(total,day,time){if(read())return;write({phase:'pending',amount:total,day,time,due:Date.now()+5000});schedule()};
+ const replies={input1:'买了点东西ㅎㅎ',input2:'够啦够啦',input3:'知道了啦亲爱的😘'};
+ function sendReply(){const st=read();if(!st||!replies[st.phase]||typed<replies[st.phase].length)return;
+  const phase=st.phase;add(replies[phase],true);typed=0;keyboardOpen=false;document.querySelector('.dq-card-keyboard')?.remove();
+  if(phase==='input3'){st.phase='done';write(st);window.dqFamilyResumeClock?.();renderKKT();return}
+  st.phase=phase==='input1'?'incoming2':'incoming3';st.line=0;write(st);renderKKT();sequenceTimer=setTimeout(nextLine,1100);
  }
- window.dqFamilyCardPaid=function(total,day,time){
-  if(read())return;
-  write({phase:'pending',amount:total,day,time,due:Date.now()+5000});schedule();
- };
+ function decorate(){
+  if(app!=='KKT'||kktRoom!=='申惟')return;
+  const st=read();if(!st||!activePhases.includes(st.phase))return;
+  const input=document.getElementById('kkt-input'),send=document.querySelector('.kkt-compose .kkt-send');if(!input||!send)return;
+  const target=replies[st.phase];
+  input.disabled=!target;input.readOnly=true;input.setAttribute('inputmode','none');input.style.fontSize='16px';
+  input.placeholder=target?'点击这里输入消息':'申惟正在回复…';input.value=target?target.slice(0,typed):'';
+  send.disabled=!target||typed<target.length;
+  send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled);
+  if(!target){document.querySelector('.dq-card-keyboard')?.remove();keyboardOpen=false;return}
+  function refresh(){input.value=target.slice(0,typed);send.disabled=typed<target.length;send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled)}
+  function advance(){typed=Math.min(target.length,typed+1);refresh()}
+  function showKeyboard(){keyboardOpen=true;const chat=document.querySelector('.kkt-chat');if(!chat)return;
+   let kb=chat.querySelector('.dq-card-keyboard');if(kb)return;
+   kb=document.createElement('div');kb.className='story-keyboard dq-card-keyboard';
+   const rows=['qwertyuiop','asdfghjkl','⇧zxcvbnm⌫'];
+   kb.innerHTML='<div class="story-kb-tools"><span>拼音</span><button type="button" data-key="hide">⌄ 收起</button></div>'+rows.map(row=>'<div class="story-kb-row">'+[...row].map(k=>'<button type="button" data-key="'+k+'">'+k+'</button>').join('')+'</div>').join('')+'<div class="story-kb-row"><button type="button" data-key="123">123</button><button type="button" data-key="emoji">☺</button><button type="button" class="story-kb-space" data-key="space">空格</button><button type="button" data-key="enter">↵</button></div>';
+   kb.addEventListener('pointerdown',e=>e.preventDefault());
+   kb.addEventListener('click',e=>{const key=e.target.closest('button')?.dataset.key;if(!key)return;
+    if(key==='hide'){keyboardOpen=false;kb.remove();return}
+    if(key==='⌫'){typed=Math.max(0,typed-1);refresh();return}
+    if(key==='enter'){sendReply();return}
+    if(key==='123'||key==='emoji'||key==='⇧')return;
+    advance();
+   });chat.appendChild(kb);
+  }
+  input.onpointerdown=e=>{e.preventDefault();input.blur();showKeyboard()};
+  input.onclick=e=>{e.preventDefault();input.blur();showKeyboard()};
+  input.onkeydown=e=>{e.preventDefault();if(e.key==='Enter')sendReply();else if(e.key==='Backspace'){typed=Math.max(0,typed-1);refresh()}else advance()};
+  input.onbeforeinput=e=>{e.preventDefault();advance()};input.onpaste=e=>{e.preventDefault();advance()};
+  send.onclick=sendReply;
+  if(keyboardOpen)showKeyboard();
+ }
+ const oldRender=window.renderKKT;
+ window.renderKKT=function(...args){const ret=oldRender.apply(this,args);decorate();return ret};
  const previousSend=window.kktSend;
- window.kktSend=function(...args){
-  const active=app==='KKT'&&kktRoom==='申惟';
-  const field=active?document.getElementById('kkt-input'):null;
-  const text=field?.value.trim()||'';
-  const st=read();
-  // The scripted Oct 24 input handler only accepts its fixed lines. Family-card
-  // replies are free text, so append those directly after the scripted scene ends.
-  if(active&&text&&st&&['waiting1','waiting2'].includes(st.phase)){
-   const t=stamp(),room=chats['申惟']??(chats['申惟']=[]);
-   room.push({who:'我',text,me:true,date:t.date,time:t.time});
-   save('chats',chats);field.value='';
-   if(st.phase==='waiting1'){
-    st.phase='reply1';write(st);renderKKT();
-    setTimeout(()=>{const cur=read();if(cur?.phase!=='reply1')return;cur.phase='waiting2';write(cur);append(['哦哦','₩'+Number(cur.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝']);},1100);
-   }else{
-    st.phase='reply2';write(st);renderKKT();
-    setTimeout(()=>{const cur=read();if(cur?.phase!=='reply2')return;append(['那就好ㅎㅎ','想买什么就买','不够的话跟我说']);
-     setTimeout(()=>{const fin=read();if(fin?.phase!=='reply2')return;append(['知道了啦亲爱的😘'],true,false);fin.phase='done';write(fin);window.dqFamilyResumeClock?.();},1300);
-    },1100);
-   }
-   return;
-  }
-  const result=previousSend.apply(this,args);
-  if(active&&text)window.dqFamilyTagLastMessage?.('申惟',text);
-  return result;
- };
- // Recover mid-conversation state after refresh without freezing the clock forever.
+ window.kktSend=function(...args){if(app==='KKT'&&kktRoom==='申惟'&&activePhases.includes(read()?.phase)){sendReply();return}
+  const field=app==='KKT'&&kktRoom==='申惟'?document.getElementById('kkt-input'):null;
+  const text=field?.value.trim()||'';const ret=previousSend.apply(this,args);
+  if(text)window.dqFamilyTagLastMessage?.('申惟',text);return ret};
+ // Restore an interrupted sequence on refresh, preserving the remaining lines.
  const saved=read();
- if(saved&&['waiting1','reply1','waiting2','reply2'].includes(saved.phase)){
+ if(saved&&activePhases.includes(saved.phase)){
   if(!window.dqFamilyClockPause?.active)window.dqFamilyPauseClock?.();
-  if(saved.phase==='reply1'){
-   saved.phase='waiting2';write(saved);append(['哦哦','₩'+Number(saved.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝'],false,false);
-  }else if(saved.phase==='reply2'){
-   append(['那就好ㅎㅎ','想买什么就买','不够的话跟我说'],false,false);
-   append(['知道了啦亲爱的😘'],true,false);saved.phase='done';write(saved);window.dqFamilyResumeClock?.();
-  }
- }else if(saved?.phase==='done'&&window.dqFamilyClockPause?.active){window.dqFamilyResumeClock?.()}
+  if(saved.phase.startsWith('incoming'))sequenceTimer=setTimeout(nextLine,900);
+ }else if(saved?.phase==='done'&&window.dqFamilyClockPause?.active)window.dqFamilyResumeClock?.();
  schedule();
 })();
 </script>
