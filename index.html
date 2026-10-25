@@ -1603,7 +1603,7 @@ function kktOpen(n){kktRoom=n;chatName=n;renderKKT()}
 function kktSend(){const field=document.getElementById('kkt-input');if(!field)return;const t=field.value.trim();if(!t)return;(chats[kktRoom]??=[]).push({who:'나',text:t,me:true});save('chats',chats);renderKKT()}
 function kktList(){const q=kktSearch.toLowerCase();let names=kktTab==='friends'?['나','최영재','엄마','아빠','TWS 단체방','신유','한진','지훈','경민']:kktTab==='chats'?['최영재','엄마','아빠','TWS 단체방','신유','한진','지훈','경민']:[];names=names.filter(n=>n.toLowerCase().includes(q));return `<div class="kkt-list"><input class="kkt-search" placeholder="검색" aria-label="검색" value="${esc(kktSearch)}" oninput="kktSearch=this.value;document.getElementById('kkt-rows').innerHTML=kktRows()"><div id="kkt-rows">${kktRows()}</div></div>`}
 function kktRows(){const q=kktSearch.toLowerCase();if(kktTab==='more')return `<div style="padding:20px 0"><h3>더보기 · 더 보기</h3></div>`;if(kktTab==='open')return `<div style="padding:22px 0;text-align:center;color:#888">오픈채팅 · 공개 채팅방이 없습니다</div>`;const names=(kktTab==='friends'?['나','최영재','엄마','아빠','TWS 단체방','신유','한진','지훈','경민']:['최영재','엄마','아빠','TWS 단체방','신유','한진','지훈','경민']).filter(n=>n.toLowerCase().includes(q));return `${kktTab==='friends'?'<div class="kkt-sub">친구 · 친구</div>':'<div class="kkt-sub">채팅 · 채팅</div>'}${names.map(n=>{const a=chats[n]||[],last=a.length?a[a.length-1].text:(n==='나'?'내 프로필':'새로운 대화');return `<button class="kkt-contact" onclick="${n==='나'?"notify('DOHOON 프로필')":`kktOpen('${n}')`}">${n==='나'?kktAvatar('나'):kktAvatar(n)}<span class="kkt-contact-info"><b>${esc(n==='나'?'DOHOON':n==='최영재'?'최영재♡':n)}${n==='최영재'?' <svg style="vertical-align:middle;margin-left:5px" width="13" height="17" viewBox="0 0 16 20" aria-label="고정"><path fill="#98989e" d="M4 1h8v2l-1 2v5l2 2v2H9l-1 5-1-5H3v-2l2-2V5L4 3z"/></svg>':''}</b><small>${esc(last)}</small></span>${kktTab==='chats'?'<span class="kkt-time">오후 8:42</span>':''}</button>`}).join('')}`}
-function renderKKT(){if(kktRoom){const msgs=(chats[kktRoom]||[]).map((m,i)=>({m,i})).sort((a,b)=>String(a.m.date||'2029-05-31').localeCompare(String(b.m.date||'2029-05-31'))||a.i-b.i).map(x=>x.m);screen(`<div class="kkt"><div class="kkt-chat"><div class="kkt-chat-head"><button class="kkt-icon" onclick="kktRoom=null;renderKKT()" aria-label="채팅 목록으로 돌아가기">‹</button><b>${esc(kktRoom==='최영재'?'최영재♡':kktRoom)}</b><button class="kkt-icon" onclick="notify('채팅 검색')">⌕</button><button class="kkt-icon" onclick="notify('채팅방 메뉴')">☰</button></div><div class="kkt-chat-scroll" id="kkt-scroll">${msgs.map((m,i)=>`${(i===0||m.date!==msgs[i-1].date)?`<div class="kkt-date">${kktDateLabel(m.date)}</div>`:''}<div class="kkt-msg ${m.me?'mine':''}">${m.me?'':kktAvatar(m.who)}<div class="kkt-msg-main">${m.me?'':`<span class="kkt-sender">${esc(m.who)}</span>`}<span class="kkt-bubble ${m.replyTo?'kkt-bubble-replied':''}">${m.replyTo?`<span class="kkt-reply-quote"><span class="kkt-reply-label">도훈에게 답장</span><span class="kkt-reply-text">${esc(m.replyTo)}</span></span><span class="kkt-reply-divider"></span>`:''}<span class="kkt-reply-message">${esc(m.text)}</span></span></div></div>`).join('')}</div><div class="kkt-compose"><button class="kkt-icon" onclick="notify('첨부파일 추가')">＋</button><input id="kkt-input" placeholder="메시지 입력" onkeydown="if(event.key==='Enter')kktSend()"><button class="kkt-send" onclick="kktSend()">전송</button></div></div></div>`);const el=document.getElementById('kkt-scroll');if(el)el.scrollTop=el.scrollHeight;return}
+function renderKKT(){if(kktRoom){const msgs=(chats[kktRoom]||[]).map((m,i)=>({m,i})).sort((a,b)=>(!a.m.date||!b.m.date?0:String(a.m.date+' '+(a.m.time||'00:00')).localeCompare(String(b.m.date+' '+(b.m.time||'00:00'))))||a.i-b.i).map(x=>x.m);screen(`<div class="kkt"><div class="kkt-chat"><div class="kkt-chat-head"><button class="kkt-icon" onclick="kktRoom=null;renderKKT()" aria-label="채팅 목록으로 돌아가기">‹</button><b>${esc(kktRoom==='최영재'?'최영재♡':kktRoom)}</b><button class="kkt-icon" onclick="notify('채팅 검색')">⌕</button><button class="kkt-icon" onclick="notify('채팅방 메뉴')">☰</button></div><div class="kkt-chat-scroll" id="kkt-scroll">${msgs.map((m,i)=>`${(i===0||m.date!==msgs[i-1].date)?`<div class="kkt-date">${kktDateLabel(m.date)}</div>`:''}<div class="kkt-msg ${m.me?'mine':''}">${m.me?'':kktAvatar(m.who)}<div class="kkt-msg-main">${m.me?'':`<span class="kkt-sender">${esc(m.who)}</span>`}<span class="kkt-bubble ${m.replyTo?'kkt-bubble-replied':''}">${m.replyTo?`<span class="kkt-reply-quote"><span class="kkt-reply-label">도훈에게 답장</span><span class="kkt-reply-text">${esc(m.replyTo)}</span></span><span class="kkt-reply-divider"></span>`:''}<span class="kkt-reply-message">${esc(m.text)}</span></span></div></div>`).join('')}</div><div class="kkt-compose"><button class="kkt-icon" onclick="notify('첨부파일 추가')">＋</button><input id="kkt-input" placeholder="메시지 입력" onkeydown="if(event.key==='Enter')kktSend()"><button class="kkt-send" onclick="kktSend()">전송</button></div></div></div>`);const el=document.getElementById('kkt-scroll');if(el)el.scrollTop=el.scrollHeight;return}
 const labels={friends:'친구',chats:'채팅',open:'오픈채팅',more:'더보기'};screen(`<div class="kkt"><div class="kkt-head"><h2>${labels[kktTab]}</h2><button class="kkt-icon" onclick="notify('목록 검색창에서 검색하세요')" aria-label="검색">⌕</button><button class="kkt-icon" onclick="notify('친구 추가')" aria-label="친구 추가">♙</button><button class="kkt-icon" onclick="notify('설정')" aria-label="설정">⚙</button></div>${kktList()}<div class="kkt-bottom">${[['friends','♙','친구'],['chats','▤','채팅'],['open','◉','오픈채팅'],['more','•••','더보기']].map(([id,ico,name])=>`<button class="${kktTab===id?'active':''}" onclick="kktSwitch('${id}')"><span>${ico}</span>${name}</button>`).join('')}</div></div>`)}
 let messageThreads=load('messageThreads',null),messageActive=-1,messageSearch='',messageComposing=false;
 // Fresh SMS inbox: delivery, promotions, verification and occasional acquaintances.
@@ -2768,7 +2768,7 @@ function changePlayerName(){
   }
   return ACCEL_BASE+Math.max(0,Date.now()-start)*120;
  }
- window.getStoryTime=()=>new Date(nowStory());
+ window.getStoryTime=()=>new Date(window.dqFamilyClockPause?.active?window.dqFamilyClockPause.story:nowStory());
  window.setOct24StoryClock=function(hm){
   if(getStart()||readCall()||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(hm))return;
   const stamp=Date.parse('2026-10-24T'+hm+':00');
@@ -2849,7 +2849,7 @@ window.shinyuEndCall=function(){const c=readCall();if(!c||c.status==='ended')ret
  };
  function refresh(){
   const start=getStart();
-  if(start&&!readCall()&&ACCEL_BASE+Math.max(0,Date.now()-start)*120>=TARGET){
+  if(start&&!window.dqFamilyClockPause?.active&&!readCall()&&ACCEL_BASE+Math.max(0,Date.now()-start)*120>=TARGET){
    saveCall({status:'ringing'});
   }
   const storyDate=typeof window.getStoryTime==='function'?window.getStoryTime():new Date(nowStory());
@@ -2968,7 +2968,7 @@ simRestoreShots();
       try{
         for(let i=localStorage.length-1;i>=0;i--){
           const k=localStorage.key(i);
-          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k==='dq_familycard_kkt_v1'||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
+          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k.startsWith('dq_shop_')||k==='dq_familycard_kkt_v1'||k==='dq_family_clock_pause_v1'||k==='dq_calendar_events_v1'||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
         }
       }catch(e){}
       try{simPhotoDB.then(db=>{if(db)db.close();const req=indexedDB.deleteDatabase('diaoqi_sim_photos');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();setTimeout(()=>location.reload(),1200)})}catch(e){location.reload()}
@@ -3366,59 +3366,126 @@ simRestoreShots();
  };
 })();
 </script>
+<script id="dq-family-clock-and-chat-order">
+(function(){
+ const KEY='dq_family_clock_pause_v1';
+ const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
+ const active=read();
+ // On reload, the pause's start must move to now, not the original wall clock.
+ window.dqFamilyClockPause=active?.active?{...active,since:Date.now()}:{active:false};
+ if(active?.active)localStorage.setItem(KEY,JSON.stringify(window.dqFamilyClockPause));
+ window.dqFamilyPauseClock=function(){
+  if(window.dqFamilyClockPause?.active)return;
+  const story=typeof window.getStoryTime==='function'?window.getStoryTime().getTime():Date.parse('2026-10-24T16:42:00');
+  window.dqFamilyClockPause={active:true,story,since:Date.now()};
+  localStorage.setItem(KEY,JSON.stringify(window.dqFamilyClockPause));
+ };
+ window.dqFamilyResumeClock=function(){
+  const p=window.dqFamilyClockPause;if(!p?.active)return;
+  const elapsed=Math.max(0,Date.now()-p.since);
+  for(const key of ['shinyu_story_clock_start_v2','shinyu_1940_arrived_at']){
+   const v=Number(localStorage.getItem(key));if(v>0)localStorage.setItem(key,String(v+elapsed));
+  }
+  const callKey='shinyu_oct24_call_state_v2';
+  try{const c=JSON.parse(localStorage.getItem(callKey)||'null');if(c){
+   for(const k of ['answeredAt','endedAt'])if(Number(c[k])>0)c[k]+=elapsed;
+   localStorage.setItem(callKey,JSON.stringify(c));
+  }}catch(e){}
+  window.dqFamilyClockPause={active:false};localStorage.removeItem(KEY);
+ };
+ // Existing undated messages keep their original relative position. New messages
+ // receive the actual story timestamp at send time; don't mutate saved arrays on render.
+ const previousSend=window.kktSend;
+ window.dqFamilyTagLastMessage=function(room,text){
+  const arr=chats?.[room];if(!Array.isArray(arr))return;
+  for(let i=arr.length-1;i>=0;i--){
+   const m=arr[i];if(m.me&&m.text===text&&!m.date){
+    const d=window.getStoryTime?.()||new Date(2026,9,24);
+    m.date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    m.time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    save('chats',chats);break;
+   }
+  }
+ };
+})();
+</script>
 <script id="dq-familycard-kkt-trigger">
 (function(){
  const KEY='dq_familycard_kkt_v1';
  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
  const write=v=>localStorage.setItem(KEY,JSON.stringify(v));
- const storyStamp=()=>{const d=typeof window.getStoryTime==='function'?window.getStoryTime():new Date(2026,9,24);return {date:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),time:[String(d.getHours()).padStart(2,'0'),String(d.getMinutes()).padStart(2,'0')].join(':')}};
- function incoming(lines){
-  const state=read();if(!state||state.phase==='done')return;
-  const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);
-  for(const text of lines)room.push({who:'申惟',text,me:false,date:t.date,time:t.time});
+ const stamp=()=>{const d=window.getStoryTime?.()||new Date(2026,9,24);return {date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}};
+ function append(lines,mine=false,notifyFirst=true){
+  const st=read();if(!st||st.phase==='done')return;
+  const t=stamp(),room=chats['申惟']??(chats['申惟']=[]);
+  for(const line of lines)room.push({who:mine?'我':'申惟',text:line,me:mine,date:t.date,time:t.time});
   save('chats',chats);
   if(app==='KKT'&&kktRoom==='申惟')renderKKT();
-  window.showShinyuKktBanner?.(lines[0]);
+  if(!mine&&notifyFirst)window.showShinyuKktBanner?.(lines[0]);
  }
- function firstMessage(){
-  const st=read();if(!st||st.phase!=='pending')return;
+ function storyBusy(){
+  try{const c=JSON.parse(localStorage.getItem('shinyu_oct24_call_state_v2')||'null');if(c&&['ringing','active','answered'].includes(c.status))return true}catch(e){}
+  if(document.querySelector('#shinyu-call-overlay,#dq-movie-overlay,#dq-night-ending,#dq-movie-video,.dq-movie-player,.dq-movie-prompt'))return true;
+  if(Number(localStorage.getItem('shinyu_oct24_interactive_stage_v1')||0)<8)return true;
+  const now=window.getStoryTime?.()?.getTime()||0;
+  if(now>=Date.parse('2026-10-24T19:40:00')&&Number(localStorage.getItem('shinyu_1940_user_replied')||0)<2)return true;
+  return false;
+ }
+ function start(){
+  const st=read();if(!st||st.phase!=='pending'||Date.now()<st.due||storyBusy())return;
+  window.dqFamilyPauseClock?.();
   st.phase='waiting1';write(st);
-  incoming([typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER'),'刚刚用了我的卡吗ㅋㅋ','买了什么呀']);
+  append([typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER'),'刚刚用了我的卡吗ㅋㅋ','买了什么呀']);
  }
- let pendingTimer=null;
+ let timer=null;
  function schedule(){
-  clearTimeout(pendingTimer);
-  const st=read();if(!st||st.phase!=='pending')return;
-  pendingTimer=setTimeout(firstMessage,Math.max(0,st.due-Date.now()));
+  clearInterval(timer);timer=null;
+  if(read()?.phase!=='pending')return;
+  timer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(timer);timer=null;return}start()},250);
+  start();
  }
  window.dqFamilyCardPaid=function(total,day,time){
-  if(read())return; // The first successful family-card purchase only.
-  write({phase:'pending',amount:total,day,time,due:Date.now()+60000});
-  schedule();
+  if(read())return;
+  write({phase:'pending',amount:total,day,time,due:Date.now()+5000});schedule();
  };
  const previousSend=window.kktSend;
  window.kktSend=function(...args){
-  const isShinyu=app==='KKT'&&kktRoom==='申惟';
-  const text=isShinyu?document.getElementById('kkt-input')?.value.trim():'';
+  const active=app==='KKT'&&kktRoom==='申惟';
+  const field=active?document.getElementById('kkt-input'):null;
+  const text=field?.value.trim()||'';
   const st=read();
-  const result=previousSend.apply(this,args);
-  if(!isShinyu||!text||!st)return result;
-  if(st.phase==='waiting1'){
-   st.phase='waiting2';write(st);
-   setTimeout(()=>{const cur=read();if(!cur||cur.phase!=='waiting2')return;incoming(['哦哦','₩'+Number(cur.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝']);},1100);
-  }else if(st.phase==='waiting2'){
-   st.phase='done';write(st);
-   setTimeout(()=>{incomingDone(['那就好ㅎㅎ','想买什么就买','不够的话跟我说']);setTimeout(()=>{const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);room.push({who:'我',text:'知道了啦亲爱的😘',me:true,date:t.date,time:t.time});save('chats',chats);if(app==='KKT'&&kktRoom==='申惟')renderKKT();},1300);},1100);
+  // The scripted Oct 24 input handler only accepts its fixed lines. Family-card
+  // replies are free text, so append those directly after the scripted scene ends.
+  if(active&&text&&st&&['waiting1','waiting2'].includes(st.phase)){
+   const t=stamp(),room=chats['申惟']??(chats['申惟']=[]);
+   room.push({who:'我',text,me:true,date:t.date,time:t.time});
+   save('chats',chats);field.value='';
+   if(st.phase==='waiting1'){
+    st.phase='reply1';write(st);renderKKT();
+    setTimeout(()=>{const cur=read();if(cur?.phase!=='reply1')return;cur.phase='waiting2';write(cur);append(['哦哦','₩'+Number(cur.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝']);},1100);
+   }else{
+    st.phase='reply2';write(st);renderKKT();
+    setTimeout(()=>{const cur=read();if(cur?.phase!=='reply2')return;append(['那就好ㅎㅎ','想买什么就买','不够的话跟我说']);
+     setTimeout(()=>{const fin=read();if(fin?.phase!=='reply2')return;append(['知道了啦亲爱的😘'],true,false);fin.phase='done';write(fin);window.dqFamilyResumeClock?.();},1300);
+    },1100);
+   }
+   return;
   }
+  const result=previousSend.apply(this,args);
+  if(active&&text)window.dqFamilyTagLastMessage?.('申惟',text);
   return result;
  };
- function incomingDone(lines){
-  const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);
-  for(const text of lines)room.push({who:'申惟',text,me:false,date:t.date,time:t.time});
-  save('chats',chats);
-  if(app==='KKT'&&kktRoom==='申惟')renderKKT();
-  window.showShinyuKktBanner?.(lines[0]);
- }
+ // Recover mid-conversation state after refresh without freezing the clock forever.
+ const saved=read();
+ if(saved&&['waiting1','reply1','waiting2','reply2'].includes(saved.phase)){
+  if(!window.dqFamilyClockPause?.active)window.dqFamilyPauseClock?.();
+  if(saved.phase==='reply1'){
+   saved.phase='waiting2';write(saved);append(['哦哦','₩'+Number(saved.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝'],false,false);
+  }else if(saved.phase==='reply2'){
+   append(['那就好ㅎㅎ','想买什么就买','不够的话跟我说'],false,false);
+   append(['知道了啦亲爱的😘'],true,false);saved.phase='done';write(saved);window.dqFamilyResumeClock?.();
+  }
+ }else if(saved?.phase==='done'&&window.dqFamilyClockPause?.active){window.dqFamilyResumeClock?.()}
  schedule();
 })();
 </script>
