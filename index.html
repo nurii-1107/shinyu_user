@@ -2586,6 +2586,7 @@ function changePlayerName(){
    setTimeout(nextReply,950);
  }
  function decorate(){if(app!=='KKT'||kktRoom!=='申惟')return;
+  if(window.dqFamilyCardFreeInput?.())return;
   const input=document.getElementById('kkt-input'),btn=document.querySelector('.kkt-compose .kkt-send');if(!input||!btn)return;
   if(stage>=steps.length){input.placeholder='聊天已结束';input.disabled=true;btn.disabled=true;btn.classList.add('story-disabled');return}
   input.placeholder=waiting?'申惟正在回复…':'点击这里输入消息';input.disabled=waiting;
@@ -3042,6 +3043,7 @@ simRestoreShots();
  let typed=0,keyboardOpen=false;
  const replyTexts=['好','下来了😊'];
  function decorateReply(){
+  if(window.dqFamilyCardFreeInput?.())return;
   if(typeof app==='undefined'||app!=='KKT'||typeof kktRoom==='undefined'||kktRoom!=='申惟')return;
   const input=document.getElementById('kkt-input'),send=document.querySelector('.kkt-compose .kkt-send');
   if(!input||!send)return;
@@ -3412,6 +3414,7 @@ simRestoreShots();
 <script id="dq-familycard-kkt-trigger">
 (function(){
  const KEY='dq_familycard_kkt_v1';
+ window.dqFamilyCardFreeInput=function(){try{return ['waiting1','reply1','waiting2','reply2'].includes(JSON.parse(localStorage.getItem('dq_familycard_kkt_v1')||'null')?.phase)}catch(e){return false}};
  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
  const write=v=>localStorage.setItem(KEY,JSON.stringify(v));
  const stamp=()=>{const d=window.getStoryTime?.()||new Date(2026,9,24);return {date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}};
@@ -3421,7 +3424,13 @@ simRestoreShots();
   for(const line of lines)room.push({who:mine?'我':'申惟',text:line,me:mine,date:t.date,time:t.time});
   save('chats',chats);
   if(app==='KKT'&&kktRoom==='申惟')renderKKT();
-  if(!mine&&notifyFirst)window.showShinyuKktBanner?.(lines[0]);
+  if(!mine&&notifyFirst){
+   // The existing banner plays the KKT chime outside the conversation.
+   // Inside the open chat, the banner is suppressed, so play it here instead.
+   if(app==='KKT'&&kktRoom==='申惟')window.playKktNotificationSound?.();
+   else if(typeof window.showShinyuKktBanner==='function')window.showShinyuKktBanner(lines[0]);
+   else window.playKktNotificationSound?.();
+  }
  }
  function storyBusy(){
   try{const c=JSON.parse(localStorage.getItem('shinyu_oct24_call_state_v2')||'null');if(c&&['ringing','active','answered'].includes(c.status))return true}catch(e){}
