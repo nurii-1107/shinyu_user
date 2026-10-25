@@ -3453,7 +3453,7 @@ simRestoreShots();
  function schedule(){clearInterval(waitingTimer);waitingTimer=null;if(read()?.phase!=='pending')return;
   waitingTimer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(waitingTimer);waitingTimer=null;return}start()},250);start();}
  window.dqFamilyCardPaid=function(total,day,time){if(read())return;write({phase:'pending',amount:total,day,time,due:Date.now()+5000});schedule()};
- const replies={input1:'买了点东西ㅎㅎ',input2:'够啦够啦',input3:'知道了啦亲爱的😘'};
+ const replies={input1:'买了点东西ㅎㅎ',input2:'够啦够啦',input3:'好哦知道了啦🥰'};
  function sendReply(){const st=read();if(!st||!replies[st.phase]||typed<replies[st.phase].length)return;
   const phase=st.phase;add(replies[phase],true);typed=0;keyboardOpen=false;document.querySelector('.dq-card-keyboard')?.remove();
   if(phase==='input3'){st.phase='done';write(st);window.dqFamilyResumeClock?.();renderKKT();return}
