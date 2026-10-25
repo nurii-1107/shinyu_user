@@ -3436,7 +3436,7 @@ simRestoreShots();
   if(now>=Date.parse('2026-10-24T19:40:00')&&Number(localStorage.getItem('shinyu_1940_user_replied')||0)<2)return true;
   return false;
  }
- let sequenceTimer=null,waitingTimer=null,typed=0,keyboardOpen=false;
+ let sequenceTimer=null,waitingTimer=null,typed=0,keyboardOpen=false,freeDraft="";
  function clearSequence(){clearTimeout(sequenceTimer);sequenceTimer=null}
  function nextLine(){
   const st=read();if(!st||!st.phase.startsWith('incoming'))return;
@@ -3453,9 +3453,12 @@ simRestoreShots();
  function schedule(){clearInterval(waitingTimer);waitingTimer=null;if(read()?.phase!=='pending')return;
   waitingTimer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(waitingTimer);waitingTimer=null;return}start()},250);start();}
  window.dqFamilyCardPaid=function(total,day,time){if(read())return;write({phase:'pending',amount:total,day,time,due:Date.now()+5000});schedule()};
- const replies={input1:'买了点东西ㅎㅎ',input2:'够啦够啦',input3:'好哦知道了啦🥰'};
- function sendReply(){const st=read();if(!st||!replies[st.phase]||typed<replies[st.phase].length)return;
-  const phase=st.phase;add(replies[phase],true);typed=0;keyboardOpen=false;document.querySelector('.dq-card-keyboard')?.remove();
+ const replies={input2:'够啦够啦',input3:'好哦知道了啦🥰'};
+ function sendReply(){const st=read();if(!st||!['input1','input2','input3'].includes(st.phase))return;
+  const isFree=st.phase==='input1';
+  const reply=isFree?(document.getElementById('kkt-input')?.value||freeDraft).trim():replies[st.phase];
+  if(!reply||(!isFree&&typed<reply.length))return;
+  const phase=st.phase;add(reply,true);typed=0;freeDraft='';keyboardOpen=false;document.querySelector('.dq-card-keyboard')?.remove();
   if(phase==='input3'){st.phase='done';write(st);window.dqFamilyResumeClock?.();renderKKT();return}
   st.phase=phase==='input1'?'incoming2':'incoming3';st.line=0;write(st);renderKKT();sequenceTimer=setTimeout(nextLine,1100);
  }
@@ -3463,7 +3466,19 @@ simRestoreShots();
   if(app!=='KKT'||kktRoom!=='申惟')return;
   const st=read();if(!st||!activePhases.includes(st.phase))return;
   const input=document.getElementById('kkt-input'),send=document.querySelector('.kkt-compose .kkt-send');if(!input||!send)return;
+  if(st.phase==='input1'){
+   document.querySelector('.dq-card-keyboard')?.remove();keyboardOpen=false;
+   input.disabled=false;input.readOnly=false;input.removeAttribute('inputmode');input.style.fontSize='16px';
+   input.placeholder='自由回复，输入你想说的话';input.value=freeDraft;
+   send.disabled=!freeDraft.trim();send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled);
+   input.onpointerdown=null;input.onclick=null;input.onbeforeinput=null;input.onpaste=null;
+   input.oninput=()=>{freeDraft=input.value;send.disabled=!freeDraft.trim();send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled)};
+   input.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();sendReply()}};
+   send.onclick=sendReply;
+   return;
+  }
   const target=replies[st.phase];
+  input.oninput=null;
   input.disabled=!target;input.readOnly=true;input.setAttribute('inputmode','none');input.style.fontSize='16px';
   input.placeholder=target?'点击这里输入消息':'申惟正在回复…';input.value=target?target.slice(0,typed):'';
   send.disabled=!target||typed<target.length;
