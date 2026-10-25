@@ -1899,7 +1899,7 @@ function dqShopPayConfirm(){
   thread.messages.push({me:false,text:message,time:day.slice(5)+' '+time});
   messageThreads=messageThreads.filter(t=>t!==thread);messageThreads.unshift(thread);
   messageSave();notify('付款成功！银行短信已发送');
- }else notify('已使用申惟的亲属卡（尾号1799）完成模拟付款');
+ }else {notify('已使用申惟的亲属卡（尾号1799）完成模拟付款');window.dqFamilyCardPaid?.(total,day,time)}
  renderSafari();
 }
 function dqShopPaymentHTML(st){
@@ -2968,7 +2968,7 @@ simRestoreShots();
       try{
         for(let i=localStorage.length-1;i>=0;i--){
           const k=localStorage.key(i);
-          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
+          if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k==='dq_familycard_kkt_v1'||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
         }
       }catch(e){}
       try{simPhotoDB.then(db=>{if(db)db.close();const req=indexedDB.deleteDatabase('diaoqi_sim_photos');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();setTimeout(()=>location.reload(),1200)})}catch(e){location.reload()}
@@ -3364,6 +3364,62 @@ simRestoreShots();
      '<button class="kkt-send" onclick="kktSend()">发送</button></div></div></div>');
    const el=document.getElementById('kkt-scroll');if(el)el.scrollTop=el.scrollHeight;
  };
+})();
+</script>
+<script id="dq-familycard-kkt-trigger">
+(function(){
+ const KEY='dq_familycard_kkt_v1';
+ const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
+ const write=v=>localStorage.setItem(KEY,JSON.stringify(v));
+ const storyStamp=()=>{const d=typeof window.getStoryTime==='function'?window.getStoryTime():new Date(2026,9,24);return {date:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),time:[String(d.getHours()).padStart(2,'0'),String(d.getMinutes()).padStart(2,'0')].join(':')}};
+ function incoming(lines){
+  const state=read();if(!state||state.phase==='done')return;
+  const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);
+  for(const text of lines)room.push({who:'申惟',text,me:false,date:t.date,time:t.time});
+  save('chats',chats);
+  if(app==='KKT'&&kktRoom==='申惟')renderKKT();
+  window.showShinyuKktBanner?.(lines[0]);
+ }
+ function firstMessage(){
+  const st=read();if(!st||st.phase!=='pending')return;
+  st.phase='waiting1';write(st);
+  incoming([typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER'),'刚刚用了我的卡吗ㅋㅋ','买了什么呀']);
+ }
+ let pendingTimer=null;
+ function schedule(){
+  clearTimeout(pendingTimer);
+  const st=read();if(!st||st.phase!=='pending')return;
+  pendingTimer=setTimeout(firstMessage,Math.max(0,st.due-Date.now()));
+ }
+ window.dqFamilyCardPaid=function(total,day,time){
+  if(read())return; // The first successful family-card purchase only.
+  write({phase:'pending',amount:total,day,time,due:Date.now()+60000});
+  schedule();
+ };
+ const previousSend=window.kktSend;
+ window.kktSend=function(...args){
+  const isShinyu=app==='KKT'&&kktRoom==='申惟';
+  const text=isShinyu?document.getElementById('kkt-input')?.value.trim():'';
+  const st=read();
+  const result=previousSend.apply(this,args);
+  if(!isShinyu||!text||!st)return result;
+  if(st.phase==='waiting1'){
+   st.phase='waiting2';write(st);
+   setTimeout(()=>{const cur=read();if(!cur||cur.phase!=='waiting2')return;incoming(['哦哦','₩'+Number(cur.amount).toLocaleString('ko-KR')+'对吧','够用吗宝宝']);},1100);
+  }else if(st.phase==='waiting2'){
+   st.phase='done';write(st);
+   setTimeout(()=>{incomingDone(['那就好ㅎㅎ','想买什么就买','不够的话跟我说']);setTimeout(()=>{const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);room.push({who:'我',text:'知道了啦亲爱的😘',me:true,date:t.date,time:t.time});save('chats',chats);if(app==='KKT'&&kktRoom==='申惟')renderKKT();},1300);},1100);
+  }
+  return result;
+ };
+ function incomingDone(lines){
+  const t=storyStamp();const room=chats['申惟']??(chats['申惟']=[]);
+  for(const text of lines)room.push({who:'申惟',text,me:false,date:t.date,time:t.time});
+  save('chats',chats);
+  if(app==='KKT'&&kktRoom==='申惟')renderKKT();
+  window.showShinyuKktBanner?.(lines[0]);
+ }
+ schedule();
 })();
 </script>
 </body></html>
