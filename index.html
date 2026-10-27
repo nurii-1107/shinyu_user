@@ -1871,6 +1871,10 @@ const DQ_SHOP_RESTAURANTS=[
 ];
 function dqShopState(){try{let v=JSON.parse(localStorage.getItem(DQ_SHOP_KEY)||'{}');return {cart:v.cart||{},likes:v.likes||[],orders:v.orders||[]}}catch(e){return {cart:{},likes:[],orders:[]}}}
 function dqShopSave(v){localStorage.setItem(DQ_SHOP_KEY,JSON.stringify(v))}
+const DQ_SEA_QUEST_KEY='shinyu_day25_sea_booking_done';
+function dqSeaQuestActive(){return !!localStorage.getItem('dq_night_v1_next_day_started_at')&&!localStorage.getItem(DQ_SEA_QUEST_KEY)}
+function dqSeaQuestFinished(){return !!localStorage.getItem(DQ_SEA_QUEST_KEY)}
+function dqSeaQuestMarkDone(){localStorage.setItem(DQ_SEA_QUEST_KEY,'1')}
 function dqShopBookings(){try{let a=JSON.parse(localStorage.getItem(DQ_BOOKING_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
 function dqShopMoney(st){return Object.entries(st.cart).reduce((sum,[id,n])=>sum+(DQ_SHOP_PRODUCTS.find(p=>p[0]===id)?.[3]||0)*n,0)}
 function dqShopAction(kind,id){
@@ -1921,20 +1925,35 @@ function dqShopPaymentHTML(st){
 }
 function dqShopSetTab(tab){dqShopTab=tab;renderSafari()}
 function dqShopSetSearch(v){dqShopSearch=v;renderSafari()}
-function dqShopNav(page){dqShopPage=page;dqShopRestaurant=null;renderSafari()}
-function dqShopOpenRestaurant(id){dqShopRestaurant=id;renderSafari()}
+function dqShopNav(page){if(dqSeaQuestActive()&&page!=='预约'){notify('请先完成海鲜餐厅预约');return}dqShopPage=page;dqShopRestaurant=null;renderSafari()}
+function dqShopOpenRestaurant(id){if(dqSeaQuestActive()&&id&&id!=='list'&&id!=='sea'){notify('请先预约海鲜餐厅');return}dqShopRestaurant=id;renderSafari()}
 function dqShopReserve(){
  const r=DQ_SHOP_RESTAURANTS.find(x=>x.id===dqShopRestaurant);if(!r)return;
  const day=document.getElementById('dq-reserve-date')?.value;
  const time=document.getElementById('dq-reserve-time')?.value;
  const people=Number(document.getElementById('dq-reserve-people')?.value);
  if(!day||!time||!people||people<1||people>12){notify('请填写完整的预约日期、时间和人数');return}
+ if(dqSeaQuestActive()&&(r.id!=='sea'||day!=='2026-11-07'||time!=='19:00'||people!==2)){notify('请预约海鲜餐厅：11月7日19:00，2人');return}
  const list=dqShopBookings();list.unshift({id:'RS'+Date.now(),restaurantId:r.id,place:r.name,day,time,people:String(people),status:'已预约'});
  try{localStorage.setItem(DQ_BOOKING_KEY,JSON.stringify(list))}catch(e){notify('预约保存失败');return}
- dqShopRestaurant=null;notify('餐厅预约成功');renderSafari();
+ if(dqSeaQuestActive()){dqSeaQuestMarkDone();localStorage.setItem('dq_day25_invite_pending_v1',list[0].id);setTimeout(()=>{if(typeof window.dqDay25InvitePrompt==='function')window.dqDay25InvitePrompt()},450)}dqShopRestaurant=null;notify('餐厅预约成功');renderSafari();
 }
 function dqShopRemoveBooking(id){if(!confirm('取消这条预约吗？'))return;localStorage.setItem(DQ_BOOKING_KEY,JSON.stringify(dqShopBookings().filter(x=>x.id!==id)));renderSafari()}
 
+
+function dqShopShareBooking(id){
+ const b=dqShopBookings().find(x=>x.id===id);if(!b)return;
+ const old=document.getElementById('dq-share-invite');if(old)old.remove();
+ const text=`🍽️ 一起吃饭吧！\n餐厅：${b.place}\n日期：${b.day}\n时间：${b.time}\n人数：${b.people}人\n期待和你一起吃饭 ♡`;
+ const el=document.createElement('div');el.id='dq-share-invite';el.className='dq-share-backdrop';
+ el.innerHTML=`<div class="dq-share-panel"><button class="dq-share-close" onclick="dqShopCloseInvite()">✕</button><div class="dq-share-subtitle">DINNER INVITATION</div><div class="dq-share-hero">🦞</div><h2>一起吃饭吧 ♡</h2><div class="dq-share-place">${esc(b.place)}</div><div class="dq-share-detail"><div>📅 ${esc(b.day)}</div><div>🕖 ${esc(b.time)}</div><div>👥 ${esc(String(b.people))}人</div></div><div class="dq-share-message">期待和你一起吃饭 ✨</div><button class="dq-share-primary" onclick="dqShopCopyInvite('${b.id}')">复制邀请卡文字</button><button class="dq-share-secondary" onclick="dqShopNativeShare('${b.id}')">分享给别人</button><p>可以复制后在KKT里使用小手机键盘发送邀请</p></div>`;
+ el.addEventListener('click',e=>{if(e.target===el)el.remove()});
+ document.getElementById('phone').appendChild(el);
+}
+function dqShopCloseInvite(){document.getElementById('dq-share-invite')?.remove()}
+function dqShopInviteText(id){const b=dqShopBookings().find(x=>x.id===id);return b?`🍽️ 一起吃饭吧！\n餐厅：${b.place}\n日期：${b.day}\n时间：${b.time}\n人数：${b.people}人\n期待和你一起吃饭 ♡`:''}
+async function dqShopCopyInvite(id){const t=dqShopInviteText(id);if(!t)return;try{await navigator.clipboard.writeText(t);notify('邀请内容已复制，可以发给朋友啦')}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');notify('邀请内容已复制')}catch(err){notify('复制失败，请使用分享功能')}a.remove()}}
+async function dqShopNativeShare(id){const t=dqShopInviteText(id);if(!t)return;if(navigator.share){try{await navigator.share({title:'餐厅邀请卡',text:t})}catch(e){if(e.name!=='AbortError')dqShopCopyInvite(id)}}else dqShopCopyInvite(id)}
 // Original vector product illustrations; no external photos or real product imagery.
 function dqShopIllustration(p){
  const n=Number(p[0].slice(1))||1;
@@ -1961,21 +1980,25 @@ function dqShopRender(){
  if(dqShopPage==='购物车')list=DQ_SHOP_PRODUCTS.filter(p=>st.cart[p[0]]>0);
  const products=`<div class="dq-shop-products">${list.map(p=>`<div class="dq-shop-product">${dqShopIllustration(p)}<div class="dq-shop-pbody"><b>${p[1]}</b><small>${p[5]}</small><div class="dq-shop-price">₩${p[3].toLocaleString('ko-KR')}</div><div class="dq-shop-actions">${dqShopPage==='购物'?`<button onclick="dqShopAction('like','${p[0]}')">${st.likes.includes(p[0])?'♥ 已收藏':'♡ 收藏'}</button>`:''}${dqShopPage==='购物车'?`<button onclick="dqShopAction('minus','${p[0]}')">−</button><span>×${st.cart[p[0]]||0}</span>`:''}<button class="dq-shop-buy" onclick="dqShopAction('add','${p[0]}')">＋ ${dqShopPage==='购物车'?'增加':'加购'}</button></div></div></div>`).join('')||'<div class="dq-shop-empty">这里还没有商品 ♡</div>'}</div>`;
  const bookings=dqShopBookings();
- const bookingRecords=`<div class="dq-shop-booking"><h3>我的餐厅预约</h3>${bookings.map(b=>`<div class="dq-shop-bookitem"><b>${esc(b.place)}</b><small>${esc(b.day)} · ${esc(b.time)} · ${esc(String(b.people))}人</small><small>${esc(b.status||'已预约')}</small><button onclick="dqShopRemoveBooking('${b.id}')">取消预约</button></div>`).join('')||'<div class="dq-shop-empty">暂无餐厅预约</div>'}</div>`;
+ const bookingRecords=`<div class="dq-shop-booking"><h3>我的餐厅预约</h3>${bookings.map(b=>`<div class="dq-shop-bookitem"><b>${esc(b.place)}</b><small>${esc(b.day)} · ${esc(b.time)} · ${esc(String(b.people))}人</small><small>${esc(b.status||'已预约')}</small><div class="dq-booking-actions"><button onclick="dqShopRemoveBooking('${b.id}')">取消预约</button></div></div>`).join('')||'<div class="dq-shop-empty">暂无餐厅预约</div>'}</div>`;
  let bookingHtml='';
  if(dqShopRestaurant){
   const r=DQ_SHOP_RESTAURANTS.find(x=>x.id===dqShopRestaurant);
-  bookingHtml=r?`<div class="dq-shop-booking"><button class="dq-shop-back" onclick="dqShopOpenRestaurant(null)">‹ 返回餐厅列表</button><div class="dq-shop-resthero">${r.emoji}</div><h3>${r.name}</h3><p>${r.kind} · ${r.desc}<br>${r.price}</p><h3>选择预约信息</h3><label class="dq-shop-label">日期<input type="date" id="dq-reserve-date" value="${dqCalISO(dqCalStory())}"></label><label class="dq-shop-label">时间<input type="time" id="dq-reserve-time" value="19:00"></label><label class="dq-shop-label">人数<select id="dq-reserve-people">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i===1?'selected':''}>${i+1}人</option>`).join('')}</select></label><button class="dq-shop-bookbtn" onclick="dqShopReserve()">确认预约</button><p>仅模拟预约，不会向真实餐厅发送订单。</p></div>`:'';
+  bookingHtml=r?`<div class="dq-shop-booking"><button class="dq-shop-back" onclick="dqShopOpenRestaurant(null)">‹ 返回餐厅列表</button><div class="dq-shop-resthero">${r.emoji}</div><h3>${r.name}</h3><p>${r.kind} · ${r.desc}<br>${r.price}</p><h3>选择预约信息</h3><label class="dq-shop-label">日期<input type="date" id="dq-reserve-date" value="${dqSeaQuestActive()?'2026-11-07':dqCalISO(dqCalStory())}" ${dqSeaQuestActive()?'readonly':''}></label><label class="dq-shop-label">时间<input type="time" id="dq-reserve-time" value="19:00" ${dqSeaQuestActive()?'readonly':''}></label><label class="dq-shop-label">人数<select id="dq-reserve-people" ${dqSeaQuestActive()?'disabled':''}>${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i===1?'selected':''}>${i+1}人</option>`).join('')}</select></label><button class="dq-shop-bookbtn" onclick="dqShopReserve()">确认预约</button><p>仅模拟预约，不会向真实餐厅发送订单。</p></div>`:'';
  }else{
   bookingHtml=`<div class="dq-shop-booking"><h3>预约服务</h3><div class="dq-shop-services"><button onclick="dqShopOpenRestaurant('list')">🍽️<b>餐厅</b><small>选择餐厅并预约</small></button><button class="disabled" onclick="notify('机票功能暂未开放')">✈️<b>机票</b><small>暂未开放</small></button><button class="disabled" onclick="notify('车票功能暂未开放')">🚆<b>车票</b><small>暂未开放</small></button><button class="disabled" onclick="notify('酒店功能暂未开放')">🏨<b>酒店</b><small>暂未开放</small></button></div>${bookingRecords}</div>`;
  }
- if(dqShopRestaurant==='list')bookingHtml=`<div class="dq-shop-booking"><button class="dq-shop-back" onclick="dqShopOpenRestaurant(null)">‹ 返回预约服务</button><h3>选择餐厅</h3>${DQ_SHOP_RESTAURANTS.map(r=>`<button class="dq-shop-restitem" onclick="dqShopOpenRestaurant('${r.id}')"><span>${r.emoji}</span><span><b>${r.name}</b><small>${r.kind} · ${r.desc}</small><small>${r.price}</small></span><strong>›</strong></button>`).join('')}</div>`;
+ if(dqShopRestaurant==='list')bookingHtml=`<div class="dq-shop-booking"><button class="dq-shop-back" onclick="dqShopOpenRestaurant(null)">‹ 返回预约服务</button><h3>选择餐厅</h3>${dqSeaQuestActive()?'<p class="dq-sea-quest-hint">请先预约海鲜餐厅 · 11月7日 19:00 · 2人</p>':''}${DQ_SHOP_RESTAURANTS.map(r=>`<button class="dq-shop-restitem ${dqSeaQuestActive()&&r.id!=='sea'?'dq-sea-locked':''}" ${dqSeaQuestActive()&&r.id!=='sea'?'disabled':''} onclick="dqShopOpenRestaurant('${r.id}')"><span>${r.emoji}</span><span><b>${r.name}</b><small>${r.kind} · ${r.desc}</small><small>${r.price}</small></span><strong>›</strong></button>`).join('')}</div>`;
  const orderHtml=st.orders.length?`<div class="dq-shop-orders"><h3>购买记录</h3>${st.orders.map(o=>`<div class="dq-shop-bookitem"><b>订单 ${esc(o.id)}</b><small>${esc(o.date||'')} ${esc(o.time||'')} · ${esc(o.status||'已购买')}</small><small>${(o.items||[]).map(item=>{const p=DQ_SHOP_PRODUCTS.find(x=>x[0]===item.id);return p?esc(p[1])+' ×'+item.qty:''}).filter(Boolean).join('、')}</small><b>合计 ₩${Number(o.total).toLocaleString('ko-KR')}</b><small>${o.cardLast4?'付款方式：'+esc(o.paymentType||'银行卡')+' · 尾号 '+esc(o.cardLast4):''}</small></div>`).join('')}</div>`:'';
  return `<div class="dq-shop"><div class="dq-shop-top"><div class="dq-shop-logo">购物</div><div class="dq-shop-tag">挑选心动的礼物 ♡</div></div><div class="dq-shop-content">
  ${dqShopPage==='购物'?`<div class="dq-shop-search"><span>⌕</span><input placeholder="搜索品牌、香水、包袋、钱包" value="${esc(dqShopSearch)}" oninput="dqShopSetSearch(this.value)"></div><div class="dq-shop-tabs">${['全部','香水','钱包','包袋','配饰','收藏'].map(t=>`<button class="${dqShopTab===t?'active':''}" onclick="dqShopSetTab('${t}')">${t}</button>`).join('')}</div><div class="dq-shop-banner"><b>奢侈品精选</b><span>男女款包袋、香水与经典配饰 ✨</span></div>${products}`:dqShopPage==='预约'?bookingHtml:`<div class="dq-shop-cart"><b>购物车合计 ₩${total.toLocaleString('ko-KR')}</b><button onclick="dqShopAction('checkout')">购买</button></div>${products}${orderHtml}`}
  <div class="dq-shop-footer">模拟购物及预约 · 不提供真实支付服务</div></div><div class="dq-shop-bottom">${[['购物','🛍️'],['预约','📅'],['购物车','🛒']].map(([t,emoji])=>`<button class="${dqShopPage===t?'active':''}" onclick="dqShopNav('${t}')"><span>${emoji}</span><small>${t}</small></button>`).join('')}</div></div>`;
 }
 function renderSafari(){
+ if(dqSeaQuestActive()){
+  if(safariTabs[safariIndex]?.url!=='shop://home')safariTabs[safariIndex]={title:'购物',url:'shop://home'};
+  safariMode='page';dqShopPage='预约';
+ }
 let t=safariTabs[safariIndex]||safariTabs[0],start=!t.url;
 let main='';
 if(safariMode==='tabs')main=`<h1>탭</h1>${safariTabs.map((v,i)=>`<div class="sftab"><button style="background:none;border:0;text-align:left;flex:1" onclick="safariSwitch(${i})"><b>${esc(v.title||'시작 페이지')}</b><div style="color:#999;font-size:12px;margin-top:6px">${esc(v.url||'시작 페이지')}</div></button><button style="border:0;background:none;color:#888;font-size:22px" onclick="safariClose(${i})">×</button></div>`).join('')}<button class="sfrow" style="color:#007aff" onclick="safariNew()">＋ 새 탭</button>`;
@@ -3193,7 +3216,13 @@ simRestoreShots();
    const postBase=Math.min(T2200,Math.max(T2130,get('post_clock_base')||T2130));
    return Math.min(T2200,postBase+Math.max(0,Date.now()-publishedAt)*120);
  }
- window.getStoryTime=()=>new Date(timeMs());
+ // After the 22:00 swipe, continue the next chapter at Oct 25, 12:00 (noon).
+ const NEXT_DAY=Date.parse('2026-10-25T12:00:00');
+ window.getStoryTime=()=>{
+   const anchor=get('next_day_started_at');
+   if(anchor)return new Date(NEXT_DAY+Math.max(0,Date.now()-anchor));
+   return new Date(timeMs());
+ };
  function ensureShinyuPost(){
    if(timeMs()<T2130||typeof igShinyuPosts==='undefined')return;
    if(igShinyuPosts.some(p=>p.id==='dq-2130-shinyu'))return;
@@ -3243,14 +3272,14 @@ simRestoreShots();
  function showEnding(){
    const phone=document.getElementById('phone');if(!phone||document.getElementById('dq-night-ending')||get('ending_dismissed_v2'))return;
    const el=document.createElement('div');el.id='dq-night-ending';
-   el.innerHTML='<div class="dq-ending-line">后续还在制作<br>可以先玩玩其他功能</div><small>从屏幕底部向上滑动返回主页 ↑</small>';
+   el.innerHTML='<div class="dq-ending-line">向上滑动开启新的一天</div><small>10月25日 · 12:00 ↑</small>';
    let y=null;
    el.addEventListener('touchstart',e=>{y=e.touches[0].clientY},{passive:true});
    el.addEventListener('touchend',e=>{if(y!==null&&y-e.changedTouches[0].clientY>45)dismiss()},{passive:true});
    let pointer=null;
    el.addEventListener('pointerdown',e=>{pointer=e.clientY});
    el.addEventListener('pointerup',e=>{if(pointer!==null&&pointer-e.clientY>45)dismiss();pointer=null});
-   function dismiss(){put('ending_dismissed',1);put('ending_dismissed_v2',1);el.remove();home()}
+   function dismiss(){if(get('next_day_started_at'))return;put('next_day_started_at',Date.now());put('ending_dismissed',1);put('ending_dismissed_v2',1);el.remove();home();setTimeout(()=>{if(typeof dqDay25Prompt==='function')dqDay25Prompt()},550);if(typeof refreshCalendarIcon==='function')refreshCalendarIcon();if(typeof refreshAnniversaryWidget==='function')refreshAnniversaryWidget()}
    phone.appendChild(el);
    // Ensure the ending is visible above every app on mobile Safari.
    el.style.setProperty('display','flex','important');
@@ -3289,7 +3318,8 @@ simRestoreShots();
    if(hasReplied && !get('movie_finished')){showMoviePrompt();return;}
    const t=timeMs();
    if(t>=T2130){ensureShinyuPost();if(!get('user_posted'))showNotice();if(lastStage===0&&app==='Instagram'&&typeof renderIG==='function')renderIG();lastStage=1}
-   if(t>=T2200&&get('user_posted')&&typeof igMyPosts!=='undefined'&&igMyPosts.some(p=>p.id==='dq-2130-user'))showEnding();
+   // At 22:00, swipe up to start Oct 25 at noon. Do not reopen after advancing.
+   if(t>=T2200&&!get('next_day_started_at'))showEnding();
  }
  setInterval(check,300);
  window.addEventListener('pageshow',()=>setTimeout(check,300));
@@ -3587,4 +3617,238 @@ simRestoreShots();
  if(window.dqFamilyClockPause?.active&&!active.includes(st?.phase))window.dqFamilyResumeClock?.();
 })();
 </script>
-</body></html>
+
+<style id="dq-day25-quest-style">
+#dq-day25-prompt{position:absolute;z-index:99991;left:13px;right:13px;top:49px;border-radius:17px;background:rgba(245,250,255,.98);color:#1e2734;box-shadow:0 9px 30px #10182445;padding:14px 16px;font-size:13px;line-height:1.6;touch-action:pan-y;cursor:pointer}
+#dq-day25-prompt b{display:block;margin-bottom:3px;font-size:12px;color:#697c94}
+.dq-sea-locked{opacity:.35;filter:grayscale(1);cursor:not-allowed!important}.dq-sea-quest-hint{padding:10px;border-radius:10px;background:#fff0e6;color:#995e3e;font-size:12px}
+.dq-booking-actions{display:flex;gap:8px;flex-wrap:wrap}.dq-booking-actions button:first-child{background:#f5e0e5;color:#9c435b}
+.dq-share-backdrop{position:absolute;inset:0;z-index:99995;background:#1c1c2b99;display:flex;align-items:center;justify-content:center;padding:20px}
+.dq-share-panel{position:relative;width:100%;max-width:340px;background:#fff9f6;color:#3d3032;border-radius:25px;padding:26px 22px;text-align:center;box-shadow:0 12px 50px #0003}
+.dq-share-close{position:absolute;right:14px;top:12px;background:none;border:0;font-size:20px;color:#9d9292}
+.dq-share-subtitle{font-size:10px;letter-spacing:3px;color:#c0898e}.dq-share-hero{font-size:47px;margin:13px 0}.dq-share-panel h2{font-size:22px;margin:7px 0 15px}.dq-share-place{font-size:18px;font-weight:700}
+.dq-share-detail{margin:18px auto;padding:13px;background:#fff0ec;border-radius:13px;line-height:2;font-size:14px}.dq-share-message{font-size:13px;color:#b07d84;margin:12px}
+.dq-share-primary,.dq-share-secondary{display:block;width:100%;border:0;border-radius:13px;padding:12px;margin-top:9px;background:#d87588;color:white;font-weight:700}
+.dq-share-secondary{background:#f4e0e3;color:#aa5c6b}.dq-share-panel p{font-size:10px;color:#9d898b;line-height:1.5}
+</style>
+<script id="dq-day25-quest-notice">
+(function(){
+ const KEY='shinyu_day25_quest_prompt_seen';
+ window.dqDay25Prompt=function(){
+  if(!dqSeaQuestActive()||localStorage.getItem(KEY)||document.getElementById('dq-day25-prompt'))return;
+  localStorage.setItem(KEY,'1');
+  const phone=document.getElementById('phone');if(!phone)return;
+  const el=document.createElement('div');el.id='dq-day25-prompt';
+  el.innerHTML='<b>📱 系统提示</b>请在「浏览器 → 购物 → 预约 → 餐厅」中预订海鲜餐厅。<br><small>11月7日 · 19:00 · 2人</small>';
+  let sy=null,py=null,swiped=false;
+  const dismiss=()=>{clearTimeout(timer);el.remove()};
+  el.addEventListener('touchstart',e=>{sy=e.touches[0].clientY},{passive:true});
+  el.addEventListener('touchend',e=>{if(sy!==null&&Math.abs(e.changedTouches[0].clientY-sy)>35){swiped=true;dismiss()}sy=null},{passive:true});
+  el.addEventListener('pointerdown',e=>{py=e.clientY});
+  el.addEventListener('pointerup',e=>{if(py!==null&&Math.abs(e.clientY-py)>35){swiped=true;dismiss()}py=null});
+  el.addEventListener('click',()=>{if(swiped)return;dismiss();if(window.playerNameConfirmed){app='Safari';dqShopPage='预约';dqShopRestaurant=null;render()}});
+  phone.appendChild(el);
+  const timer=setTimeout(dismiss,6500);
+ };
+ window.addEventListener('pageshow',()=>setTimeout(window.dqDay25Prompt,850));
+ setTimeout(window.dqDay25Prompt,1100);
+})();
+</script>
+<style id="dq-kkt-attach-css">
+.dq-attach-menu{position:absolute;z-index:9999;bottom:78px;left:12px;right:12px;background:#fff;border-radius:19px;padding:18px 12px;box-shadow:0 7px 35px #0004;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;color:#333}
+.dq-attach-menu button{border:0;background:transparent;display:flex;align-items:center;flex-direction:column;gap:7px;font-size:12px;color:#333;padding:6px 0}
+.dq-attach-menu button span{display:flex;align-items:center;justify-content:center;background:#f4f3f8;width:51px;height:51px;border-radius:17px;font-size:26px}
+.dq-attach-menu button:disabled{opacity:.38}
+.dq-attach-card-panel{position:absolute;z-index:10000;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:18px}
+.dq-attach-card-box{background:#fff;color:#39343c;border-radius:19px;padding:19px 15px;width:100%;max-height:80%;overflow:auto}
+.dq-attach-card-box h3{margin:0 0 12px;font-size:17px}.dq-attach-card-option{display:block;width:100%;border:1px solid #eddfe3;background:#fff8f8;text-align:left;padding:14px;border-radius:13px;margin:8px 0;color:#4c4148}
+.dq-attach-card-option small{display:block;margin-top:6px;color:#97828a;font-size:12px}
+.dq-attach-card-box .dq-attach-close{background:#ece9ee;border:0;border-radius:10px;padding:10px 16px;margin-top:12px;width:100%}
+.dq-attach-card-message{display:block;border:1px solid #eed2db;background:#fff9fb;color:#59424d;border-radius:12px;padding:10px;margin-top:4px;white-space:pre-line;font-size:12px;line-height:1.65}
+</style>
+<script id="dq-kkt-attachment-card">
+(function(){
+ const SEND_KEY='dq_kkt_booking_card_sent_v1';
+ function sent(){try{return JSON.parse(localStorage.getItem(SEND_KEY)||'{}')}catch(e){return {}}}
+ function setSent(v){localStorage.setItem(SEND_KEY,JSON.stringify(v))}
+ function bookingList(){return typeof dqShopBookings==='function'?dqShopBookings():[]}
+ function freeSeats(b){return Math.max(0,Number(b.people||1)-1-(sent()[b.id]||[]).length)}
+ function currentName(){try{return kktRoom||''}catch(e){return ''}}
+ function close(){document.querySelector('.dq-attach-menu')?.remove();document.querySelector('.dq-attach-card-panel')?.remove()}
+ window.dqKktAttachmentOpen=function(){
+  close();if(!currentName())return;
+  const root=document.querySelector('.kkt-chat')||document.querySelector('.kkt');if(!root)return;
+  if(getComputedStyle(root).position==='static')root.style.position='relative';
+  const menu=document.createElement('div');menu.className='dq-attach-menu';
+  menu.innerHTML='<button onclick="dqKktAttachmentCards()"><span>💌</span>预约卡</button><button disabled><span>🖼️</span>图片</button><button disabled><span>📍</span>位置</button><button disabled><span>📞</span>通话</button>';
+  root.appendChild(menu);
+ };
+ window.dqKktAttachmentCards=function(){
+  close();const name=currentName();if(!name)return;
+  const root=document.querySelector('.kkt-chat')||document.querySelector('.kkt');if(!root)return;
+  if(getComputedStyle(root).position==='static')root.style.position='relative';
+  const panel=document.createElement('div');panel.className='dq-attach-card-panel';
+  const box=document.createElement('div');box.className='dq-attach-card-box';
+  const h=document.createElement('h3');h.textContent='选择预约卡 · 发送给 '+name;box.appendChild(h);
+  const pending=localStorage.getItem('dq_day25_invite_pending_v1');
+  if(pending&&name!=='申惟'&&name!=='신유'){const p=document.createElement('p');p.textContent='请先将11月7日海鲜餐厅邀请卡发送给申惟。';box.appendChild(p)}
+  const bookings=bookingList().filter(b=>b.status!=='已取消'&&(!pending||b.id===pending)&&( !pending||name==='申惟'||name==='신유'));
+  if(!bookings.length){const p=document.createElement('p');p.textContent='还没有预约餐厅，请先去浏览器 → 购物 → 预约 → 餐厅完成预约。';box.appendChild(p)}
+  bookings.forEach(b=>{
+   const available=freeSeats(b);const already=(sent()[b.id]||[]).includes(name);
+   const btn=document.createElement('button');btn.className='dq-attach-card-option';btn.disabled=!available||already;
+   btn.textContent='🍽️ '+b.place;
+   const small=document.createElement('small');small.textContent=b.day+' · '+b.time+' · '+b.people+'人 · '+(already?'已邀请此联系人':available?'还可邀请'+available+'人':'邀请名额已满');btn.appendChild(small);
+   btn.onclick=()=>window.dqKktSendBookingCard(b.id,name);box.appendChild(btn)
+  });
+  const cancel=document.createElement('button');cancel.className='dq-attach-close';cancel.textContent='取消';cancel.onclick=close;box.appendChild(cancel);
+  panel.appendChild(box);panel.onclick=e=>{if(e.target===panel)close()};root.appendChild(panel);
+ };
+ window.dqKktSendBookingCard=function(id,recipient){
+  if(!recipient||currentName()!==recipient)return;
+  const pending=localStorage.getItem('dq_day25_invite_pending_v1');
+  if(pending&&(id!==pending||(recipient!=='申惟'&&recipient!=='신유'))){notify('请先把海鲜餐厅邀请卡发送给申惟');return}
+  const b=bookingList().find(x=>x.id===id);if(!b)return;
+  const history=sent();const recipients=history[id]||[];
+  if(recipients.includes(recipient)||recipients.length>=Math.max(0,Number(b.people)-1)){close();notify('这张预约卡的邀请名额已用完');return}
+  const now=typeof window.getStoryTime==='function'?window.getStoryTime():new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const date=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  const time=pad(now.getHours())+':'+pad(now.getMinutes());
+  const content='💌 餐厅预约邀请卡\n🍽️ '+b.place+'\n📅 '+b.day+' '+b.time+'\n👥 预约'+b.people+'人\n邀请你一起吃饭 ♡';
+  (chats[recipient]??=[]).push({who:'나',me:true,text:content,bookingCardId:id,date,time});
+  save('chats',chats);
+  history[id]=[...recipients,recipient];setSent(history);
+  if(pending===id){localStorage.removeItem('dq_day25_invite_pending_v1');if(typeof window.dqDay25CardSent==='function')window.dqDay25CardSent(id,recipient)}
+  document.getElementById('dq-day25-invite-prompt')?.remove();
+  close();renderKKT();notify('预约卡已发送给'+recipient);
+ };
+ const original=window.renderKKT;
+ window.renderKKT=function(...args){
+  const result=original.apply(this,args);
+  if(currentName()){
+   const compose=document.querySelector('.kkt-compose');
+   const plus=compose?.querySelector('button');
+   if(plus){plus.setAttribute('onclick','dqKktAttachmentOpen()');plus.setAttribute('aria-label','添加附件')}
+   // Show the reservation message as a distinct card, rather than a plain chat text.
+   document.querySelectorAll('.kkt-msg.mine .kkt-reply-message').forEach(node=>{
+    if(node.textContent?.startsWith('💌 餐厅预约邀请卡'))node.classList.add('dq-attach-card-message');
+   });
+  }
+  return result;
+ };
+})();
+</script>
+<style id="dq-day25-invite-style">
+#dq-day25-invite-prompt{position:absolute;top:48px;left:12px;right:12px;z-index:9990;background:rgba(247,248,252,.97);border-radius:17px;padding:14px;box-shadow:0 8px 30px #0004;color:#222;touch-action:pan-y;font-size:14px;line-height:1.55;cursor:pointer}
+#dq-day25-invite-prompt b{display:block;margin-bottom:5px}#dq-day25-invite-prompt small{display:block;color:#67707e;margin-top:4px}
+</style>
+<script id="dq-day25-invite-quest">
+(function(){
+ const KEY='dq_day25_invite_pending_v1';
+ window.dqDay25InvitePrompt=function(){
+  if(!localStorage.getItem(KEY)||document.getElementById('dq-day25-invite-prompt'))return;
+  const phone=document.getElementById('phone');if(!phone)return;
+  const el=document.createElement('div');el.id='dq-day25-invite-prompt';
+  el.innerHTML='<b>📱 系统提示</b>快去给申惟发送邀请卡吧<br><small>KKT 申惟 → ＋ → 邀请卡</small>';
+  let start=null,dragged=false;
+  const dismiss=()=>{clearTimeout(timer);el.remove()};
+  el.addEventListener('touchstart',e=>{start=e.touches[0].clientY},{passive:true});
+  el.addEventListener('touchend',e=>{if(start!==null&&Math.abs(e.changedTouches[0].clientY-start)>30){dragged=true;dismiss()}start=null},{passive:true});
+  el.addEventListener('pointerdown',e=>{start=e.clientY});
+  el.addEventListener('pointerup',e=>{if(start!==null&&Math.abs(e.clientY-start)>30){dragged=true;dismiss()}start=null});
+  el.addEventListener('click',()=>{if(dragged)return;dismiss();try{app='KKT';kktRoom='申惟';chatName='申惟';render()}catch(e){try{openApp('KKT')}catch(_){}}});
+  phone.appendChild(el);
+  const timer=setTimeout(dismiss,6500);
+ };
+ window.addEventListener('pageshow',()=>setTimeout(window.dqDay25InvitePrompt,700));
+ setTimeout(window.dqDay25InvitePrompt,1000);
+})();
+</script>
+<style id="dq-day25-chat-style">
+.dq25-keyboard{background:#d2d9e5;padding:5px 4px 10px;flex-shrink:0}.dq25-keyboard .dq25-row{display:flex;gap:4px;margin:5px 0;justify-content:center}.dq25-keyboard button{flex:1;min-width:0;height:35px;border:0;border-radius:5px;background:white;color:#293441;font-size:17px;box-shadow:0 1px 1px #a6b0bc}.dq25-keyboard .dq25-tools{display:flex;justify-content:space-between;padding:4px 9px;font-size:12px}.dq25-keyboard .dq25-tools button{flex:0 0 auto;height:24px;background:transparent;box-shadow:none;font-size:12px}
+</style>
+<script id="dq-day25-invite-conversation">
+(function(){
+ const KEY='dq_day25_invite_chat_v1',START='dq_night_v1_next_day_started_at',DATE='2026-10-25';
+ const baseTime=window.getStoryTime;
+ const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}};
+ const write=s=>localStorage.setItem(KEY,JSON.stringify(s));
+ const phases=[
+  {kind:'me',text:'生日的时候去吃你喜欢的餐厅吧',at:'12:03'},
+  {kind:'me',text:'我已经预约好了！',at:'12:03'},
+  {kind:'him',text:'어',at:'12:04'},
+  {kind:'him',text:'{USER}已经订好了啊',at:'12:04'},
+  {kind:'him',text:'谢谢宝宝🩵',at:'12:04'},
+  {kind:'me',text:'你要按时来哦',at:'12:05'},
+  {kind:'me',text:'我给你准备了惊喜礼物哦',at:'12:05'},
+  {kind:'him',text:'ㅎㅎ',at:'12:06'},
+  {kind:'him',text:'那我就期待一下了',at:'12:06'},
+  {kind:'him',text:'不过',at:'12:06'},
+  {kind:'him',text:'你来就已经是最好的礼物了ㅋㅋ🩵',at:'12:06'},
+  {kind:'me',text:'😳',at:'12:07'}
+ ];
+ function room(){return chats['申惟']||(chats['申惟']=[])}
+ function name(){return typeof getPlayerName==='function'?getPlayerName():(localStorage.getItem('sim_player_name')||'USER')}
+ function active(){const s=read();return s&&s.phase!=='done'?s:null}
+ function clock(){
+  const start=localStorage.getItem(START);
+  if(!start)return baseTime();
+  const s=read();let ms=Date.parse('2026-10-25T12:00:00');
+  if(!s)return new Date(ms);
+  if(s.phase==='done')return new Date(Date.parse('2026-10-25T12:07:00')+Math.max(0,Date.now()-s.finishedAt));
+  return new Date(Date.parse('2026-10-25T'+(s.at||'12:03')+':00'));
+ }
+ window.getStoryTime=clock;
+ window.dqDay25CardSent=function(id,recipient){
+  if(recipient!=='申惟'&&recipient!=='신유'||read()||!localStorage.getItem(START))return;
+  write({phase:'running',idx:0,at:'12:03',bookingId:id});
+  if(typeof updateClocks==='function')updateClocks();
+  renderKKT();
+ };
+ let count=0,keyboardOpen=false,timer=null;
+ function advance(){const s=active();if(!s||s.waiting)return;const step=phases[s.idx];if(!step||step.kind!=='me')return;count=Math.min(step.text.length,count+1);decorate()}
+ function add(step){const t=step.text.replace('{USER}',name());room().push({who:step.kind==='me'?'나':'申惟',me:step.kind==='me',text:t,date:DATE,time:step.at,dq25Invite:true});save('chats',chats)}
+ function send(){const s=active();if(!s||s.waiting)return false;const step=phases[s.idx];if(!step||step.kind!=='me'||count<step.text.length)return true;
+  add(step);s.idx++;s.at=step.at;count=0;keyboardOpen=false;
+  if(s.idx===phases.length){s.phase='done';s.finishedAt=Date.now();s.at='12:07';}
+  write(s);renderKKT();if(s.phase!=='done')schedule();else if(typeof updateClocks==='function')updateClocks();return true;
+ }
+ function schedule(){clearTimeout(timer);const s=active();if(!s)return;const step=phases[s.idx];if(!step||step.kind!=='him')return;
+  s.waiting=true;write(s);decorate();timer=setTimeout(()=>{
+   const fresh=active();if(!fresh||fresh.idx!==s.idx)return;
+   add(step);fresh.idx++;fresh.at=step.at;fresh.waiting=false;write(fresh);
+   if(app==='KKT'&&kktRoom==='申惟')renderKKT();else window.showShinyuKktBanner?.(step.text.replace('{USER}',name()));
+   if(typeof updateClocks==='function')updateClocks();schedule();
+  },1050);
+ }
+ function keyboard(){const s=active();if(!s||s.waiting||app!=='KKT'||kktRoom!=='申惟')return;
+  keyboardOpen=true;const chat=document.querySelector('.kkt-chat');if(!chat||chat.querySelector('.dq25-keyboard'))return;
+  document.querySelector('.story-keyboard')?.remove();
+  const kb=document.createElement('div');kb.className='dq25-keyboard';
+  kb.innerHTML='<div class="dq25-tools"><span>拼音</span><button data-key="hide">⌄ 收起</button></div>'+['qwertyuiop','asdfghjkl','⇧zxcvbnm⌫'].map(row=>'<div class="dq25-row">'+[...row].map(c=>'<button data-key="'+c+'">'+c+'</button>').join('')+'</div>').join('')+'<div class="dq25-row"><button data-key="123">123</button><button data-key="emoji">☺</button><button data-key="space" style="flex:4;font-size:13px">空格</button><button data-key="enter">↵</button></div>';
+  kb.addEventListener('pointerdown',e=>e.preventDefault());kb.addEventListener('click',e=>{const key=e.target.closest('button')?.dataset.key;if(!key)return;if(key==='hide'){keyboardOpen=false;kb.remove();return}if(key==='⌫'){count=Math.max(0,count-1);decorate()}else if(key==='enter')send();else if(!['123','emoji','⇧'].includes(key))advance()});chat.appendChild(kb);
+ }
+ function decorate(){if(app!=='KKT'||kktRoom!=='申惟')return;const s=active();if(!s)return;
+  const input=document.getElementById('kkt-input'),btn=document.querySelector('.kkt-compose .kkt-send');if(!input||!btn)return;
+  const step=phases[s.idx];if(!step)return;
+  input.disabled=false;input.readOnly=true;input.setAttribute('inputmode','none');input.style.fontSize='16px';
+  input.placeholder=step.kind==='him'||s.waiting?'申惟正在回复…':'点击这里输入消息';
+  input.value=step.kind==='me'?step.text.slice(0,count):'';
+  btn.disabled=step.kind!=='me'||count<step.text.length;
+  btn.classList.toggle('story-disabled',btn.disabled);btn.classList.toggle('story-ready',!btn.disabled);
+  input.onpointerdown=e=>{e.preventDefault();input.blur();keyboard()};input.onclick=e=>{e.preventDefault();input.blur();keyboard()};
+  input.onkeydown=e=>{e.preventDefault();if(e.key==='Enter')send();else if(e.key==='Backspace'){count=Math.max(0,count-1);decorate()}else advance()};
+  input.onbeforeinput=e=>{e.preventDefault();advance()};input.onpaste=e=>{e.preventDefault();advance()};
+  btn.onclick=()=>send();if(keyboardOpen&&step.kind==='me')keyboard();
+ }
+ const previousRender=window.renderKKT;
+ window.renderKKT=function(...args){const result=previousRender.apply(this,args);decorate();return result};
+ const previousSend=window.kktSend;
+ window.kktSend=function(...args){if(app==='KKT'&&kktRoom==='申惟'&&active())return send();return previousSend.apply(this,args)};
+ // Existing October 24 input handler must not disable the new October 25 dialogue.
+ const oldClock=window.getStoryTime;
+ window.addEventListener('pageshow',()=>{if(active())schedule();});
+ if(active())setTimeout(schedule,400);
+})();
+</script></body></html>
