@@ -1679,7 +1679,22 @@ const ytVideos=[
  {id:'4n7hb8X2NP0',title:'TWS'},
  {id:'2UCyK6lyhsM',title:'TWS'},
  {id:'LkbRrm1q9P8',title:'TWS'},
- {id:'90O191z4kcE',title:'TWS'}
+ {id:'90O191z4kcE',title:'TWS'},
+ {id:'LBnoSoFst_A',title:'视频 01'},
+ {id:'3UEhcGk8niY',title:'视频 02'},
+ {id:'9SRYLAT9KvA',title:'视频 03'},
+ {id:'APm7IY6Ito8',title:'视频 04'},
+ {id:'9GkxDDNbx40',title:'视频 05'},
+ {id:'0XJ13ogcU-4',title:'视频 06'},
+ {id:'ZlO5tIe17xI',title:'视频 07'},
+ {id:'EI6FlHpKlpM',title:'视频 08'},
+ {id:'XMr4z0HM3DY',title:'视频 09'},
+ {id:'tEEtX1AeTEY',title:'视频 10'},
+ {id:'GFBsdw8PPpc',title:'视频 11'},
+ {id:'iQh0hSHx3Hg',title:'视频 12'},
+ {id:'kt-ZS3CuZBQ',title:'视频 13'},
+ {id:'8JQSC7yDhvI',title:'视频 14'},
+ {id:'tXvopPZFY8Y',title:'视频 15'}
 ];
 let ytHistory=(()=>{try{return JSON.parse(localStorage.getItem('shinyu_yt_history_v1')||'[]')}catch(e){return []}})();
 function ytPlay(id){
@@ -2972,6 +2987,15 @@ simRestoreShots();
           if(k&&(k.startsWith('sim_')||k.startsWith('shinyu_')||k.startsWith('dq_night_v1_')||k.startsWith('dq_shop_')||k==='dq_familycard_kkt_v1'||k==='dq_family_clock_pause_v1'||k==='dq_calendar_events_v1'||k==='wvsSoloPhotos'||k==='wvsMyPosts'||k==='igMyPosts'||k==='chats'||k==='phoneRecents_user_family_work_v1'||k==='notes'||k==='safariHistory'||k==='igMyPosts'||k==='messages'))localStorage.removeItem(k);
         }
       }catch(e){}
+      // Reset both persistent YouTube history and the in-memory list.
+      // The in-memory copy is initialized at page load and otherwise survives until reload.
+      try{
+        localStorage.removeItem('shinyu_yt_history_v1');
+        if(typeof ytHistory!=='undefined')ytHistory=[];
+        if(typeof ytPlaying!=='undefined')ytPlaying=null;
+        if(typeof ytTab!=='undefined')ytTab='home';
+        if(typeof ytQuery!=='undefined')ytQuery='';
+      }catch(e){}
       try{simPhotoDB.then(db=>{if(db)db.close();const req=indexedDB.deleteDatabase('diaoqi_sim_photos');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();setTimeout(()=>location.reload(),1200)})}catch(e){location.reload()}
     };
   }
@@ -3421,7 +3445,7 @@ simRestoreShots();
  const stamp=()=>{const d=window.getStoryTime?.()||new Date(2026,9,24);return {date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}};
  function add(text,mine){
   const t=stamp(),room=chats['申惟']??(chats['申惟']=[]);
-  room.push({who:mine?'我':'申惟',text,me:mine,date:t.date,time:t.time});save('chats',chats);
+  room.push({who:mine?'我':'申惟',text,me:mine,date:t.date,time:t.time,dqFamilyCard:true});save('chats',chats);
   if(app==='KKT'&&kktRoom==='申惟')renderKKT();
   if(!mine&&!(app==='KKT'&&kktRoom==='申惟')){
    if(typeof window.showShinyuKktBanner==='function')window.showShinyuKktBanner(text);
@@ -3437,6 +3461,9 @@ simRestoreShots();
   return false;
  }
  let sequenceTimer=null,waitingTimer=null,typed=0,keyboardOpen=false,freeDraft="";
+ const initial=read();
+ if(initial){typed=Math.max(0,Number(initial.typed)||0);freeDraft=String(initial.draft||'');}
+ function persistDraft(){const v=read();if(v&&activePhases.includes(v.phase)){v.typed=typed;v.draft=freeDraft;write(v)}}
  function clearSequence(){clearTimeout(sequenceTimer);sequenceTimer=null}
  function nextLine(){
   const st=read();if(!st||!st.phase.startsWith('incoming'))return;
@@ -3449,6 +3476,8 @@ simRestoreShots();
   sequenceTimer=setTimeout(nextLine,1050);
  }
  function start(){const st=read();if(!st||st.phase!=='pending'||Date.now()<st.due||storyBusy())return;
+  // Card conversation is inserted at the story's current time; older saved
+  // conversation messages must not appear *after* it in the chat window.
   window.dqFamilyPauseClock?.();st.phase='incoming1';st.line=0;write(st);nextLine();}
  function schedule(){clearInterval(waitingTimer);waitingTimer=null;if(read()?.phase!=='pending')return;
   waitingTimer=setInterval(()=>{if(read()?.phase!=='pending'){clearInterval(waitingTimer);waitingTimer=null;return}start()},250);start();}
@@ -3460,7 +3489,7 @@ simRestoreShots();
   if(!reply||(!isFree&&typed<reply.length))return;
   const phase=st.phase;add(reply,true);typed=0;freeDraft='';keyboardOpen=false;document.querySelector('.dq-card-keyboard')?.remove();
   if(phase==='input3'){st.phase='done';write(st);window.dqFamilyResumeClock?.();renderKKT();return}
-  st.phase=phase==='input1'?'incoming2':'incoming3';st.line=0;write(st);renderKKT();sequenceTimer=setTimeout(nextLine,1100);
+  st.phase=phase==='input1'?'incoming2':'incoming3';st.line=0;st.typed=0;st.draft='';write(st);renderKKT();sequenceTimer=setTimeout(nextLine,1100);
  }
  function decorate(){
   if(app!=='KKT'||kktRoom!=='申惟')return;
@@ -3472,7 +3501,7 @@ simRestoreShots();
    input.placeholder='自由回复，输入你想说的话';input.value=freeDraft;
    send.disabled=!freeDraft.trim();send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled);
    input.onpointerdown=null;input.onclick=null;input.onbeforeinput=null;input.onpaste=null;
-   input.oninput=()=>{freeDraft=input.value;send.disabled=!freeDraft.trim();send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled)};
+   input.oninput=()=>{freeDraft=input.value;persistDraft();send.disabled=!freeDraft.trim();send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled)};
    input.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();sendReply()}};
    send.onclick=sendReply;
    return;
@@ -3485,7 +3514,7 @@ simRestoreShots();
   send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled);
   if(!target){document.querySelector('.dq-card-keyboard')?.remove();keyboardOpen=false;return}
   function refresh(){input.value=target.slice(0,typed);send.disabled=typed<target.length;send.classList.toggle('story-disabled',send.disabled);send.classList.toggle('story-ready',!send.disabled)}
-  function advance(){typed=Math.min(target.length,typed+1);refresh()}
+  function advance(){typed=Math.min(target.length,typed+1);persistDraft();refresh()}
   function showKeyboard(){keyboardOpen=true;const chat=document.querySelector('.kkt-chat');if(!chat)return;
    let kb=chat.querySelector('.dq-card-keyboard');if(kb)return;
    kb=document.createElement('div');kb.className='story-keyboard dq-card-keyboard';
@@ -3494,7 +3523,7 @@ simRestoreShots();
    kb.addEventListener('pointerdown',e=>e.preventDefault());
    kb.addEventListener('click',e=>{const key=e.target.closest('button')?.dataset.key;if(!key)return;
     if(key==='hide'){keyboardOpen=false;kb.remove();return}
-    if(key==='⌫'){typed=Math.max(0,typed-1);refresh();return}
+    if(key==='⌫'){typed=Math.max(0,typed-1);persistDraft();refresh();return}
     if(key==='enter'){sendReply();return}
     if(key==='123'||key==='emoji'||key==='⇧')return;
     advance();
@@ -3502,13 +3531,18 @@ simRestoreShots();
   }
   input.onpointerdown=e=>{e.preventDefault();input.blur();showKeyboard()};
   input.onclick=e=>{e.preventDefault();input.blur();showKeyboard()};
-  input.onkeydown=e=>{e.preventDefault();if(e.key==='Enter')sendReply();else if(e.key==='Backspace'){typed=Math.max(0,typed-1);refresh()}else advance()};
+  input.onkeydown=e=>{e.preventDefault();if(e.key==='Enter')sendReply();else if(e.key==='Backspace'){typed=Math.max(0,typed-1);persistDraft();refresh()}else advance()};
   input.onbeforeinput=e=>{e.preventDefault();advance()};input.onpaste=e=>{e.preventDefault();advance()};
   send.onclick=sendReply;
   if(keyboardOpen)showKeyboard();
  }
  const oldRender=window.renderKKT;
- window.renderKKT=function(...args){const ret=oldRender.apply(this,args);decorate();return ret};
+ window.renderKKT=function(...args){
+  // Use the built-in KKT chronological renderer. Never force card messages
+  // to the end: doing so could bury an earlier 17:33 exchange after 18:50.
+  const ret=oldRender.apply(this,args);
+  decorate();return ret;
+ };
  const previousSend=window.kktSend;
  window.kktSend=function(...args){if(app==='KKT'&&kktRoom==='申惟'&&activePhases.includes(read()?.phase)){sendReply();return}
   const field=app==='KKT'&&kktRoom==='申惟'?document.getElementById('kkt-input'):null;
@@ -3516,11 +3550,50 @@ simRestoreShots();
   if(text)window.dqFamilyTagLastMessage?.('申惟',text);return ret};
  // Restore an interrupted sequence on refresh, preserving the remaining lines.
  const saved=read();
+ // Migrate an already-started card conversation saved by an older version.
+ // The earlier messages did not have a marker, so their date-based order could
+ // bury the active exchange above old messages after 'Continue'.
+ if(saved&&activePhases.includes(saved.phase)){
+  const room=chats['申惟']||[];
+  const openers=['刚刚用了我的卡吗ㅋㅋ','买了什么呀'];
+  let marker=-1;
+  for(let i=room.length-1;i>=0;i--){if(openers.includes(room[i].text)){marker=i;break}}
+  if(marker>=0){
+   const first=Math.max(0,marker-1);
+   let changed=false;
+   for(let i=first;i<room.length;i++){
+    if(!room[i].dqFamilyCard && room[i].date===room[marker].date){room[i].dqFamilyCard=true;changed=true}
+   }
+   if(changed)save('chats',chats);
+  }
+ }
+ // Repair inconsistent saves left by previous versions: a paused clock without
+ // an active card conversation must never block the main plot.
+ if(window.dqFamilyClockPause?.active && (!saved || !activePhases.includes(saved.phase))){
+  window.dqFamilyResumeClock?.();
+ }
  if(saved&&activePhases.includes(saved.phase)){
   if(!window.dqFamilyClockPause?.active)window.dqFamilyPauseClock?.();
   if(saved.phase.startsWith('incoming'))sequenceTimer=setTimeout(nextLine,900);
  }else if(saved?.phase==='done'&&window.dqFamilyClockPause?.active)window.dqFamilyResumeClock?.();
  schedule();
+})();
+</script>
+
+<script id="dq-save-resume-kkt-clock-hotfix">
+(function(){
+ // Some story modules overwrite getStoryTime after the card module is loaded.
+ // Make the pause authoritative even after reload, without modifying story anchors.
+ const underlying=window.getStoryTime;
+ if(typeof underlying==='function')window.getStoryTime=function(){
+  const p=window.dqFamilyClockPause;
+  return p?.active&&Number.isFinite(Number(p.story))?new Date(Number(p.story)):underlying();
+ };
+ // Never leave the story frozen if a previous save has no active card dialogue.
+ let st=null;
+ try{st=JSON.parse(localStorage.getItem('dq_familycard_kkt_v1')||'null')}catch(e){}
+ const active=['incoming1','input1','incoming2','input2','incoming3','input3'];
+ if(window.dqFamilyClockPause?.active&&!active.includes(st?.phase))window.dqFamilyResumeClock?.();
 })();
 </script>
 </body></html>
