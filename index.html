@@ -1679,6 +1679,7 @@ if(!localStorage.getItem('shinyu_notes_daily_v1')){
 }
 let ytTab='home',ytQuery='',ytPlaying=null;
 const ytVideos=[
+ {id:'playable-01',title:'YouTube Playables · 小游戏',playableUrl:'https://youtube.com/playables/UgkxxJFnJx0jogPkEtc1bICU4EL2rbUW8kE5?si=Tw1n7d6gXuXS3MhB'},
  {id:'UvKW3sYNxds',title:'TWS'},
  {id:'4n7hb8X2NP0',title:'TWS'},
  {id:'2UCyK6lyhsM',title:'TWS'},
@@ -1712,10 +1713,10 @@ function renderYouTube(){
  const selected=ytVideos.find(v=>v.id===ytPlaying);
  const videos=ytTab==='you'?ytHistory.map(id=>ytVideos.find(v=>v.id===id)).filter(Boolean):ytVideos;
  const found=videos.filter(v=>(v.title+' '+v.id).toLowerCase().includes(ytQuery.toLowerCase()));
- const card=v=>`<div style="margin-bottom:21px;cursor:pointer" onclick="ytPlay('${v.id}')"><div style="height:165px;border-radius:12px;background:#f1f1f1;overflow:hidden;position:relative"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" alt="视频缩略图" style="width:100%;height:100%;object-fit:cover" loading="lazy"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#ff0033;color:white;border-radius:12px;padding:9px 17px;font-size:23px">▶</span></div><div style="display:flex;gap:10px;padding-top:10px"><span style="width:34px;height:34px;border-radius:50%;background:#eee;display:grid;place-items:center">▶</span><div><b style="font-size:14px">${v.title}</b><div style="font-size:12px;color:#777;margin-top:4px">YouTube · 点击播放</div></div></div></div>`;
- screen(`<div style="height:100%;background:#fff;color:#171717;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif"><header style="display:flex;align-items:center;justify-content:space-between;padding:17px 19px 12px;border-bottom:1px solid #eee"><b style="font-size:24px;letter-spacing:-1px"><span style="display:inline-block;background:#ff0033;color:#fff;border-radius:7px;padding:1px 8px;margin-right:5px;font-size:19px">▶</span>YouTube</b><button style="border:0;background:none;font-size:24px" onclick="ytTab=ytTab==='search'?'home':'search';ytPlaying=null;renderYouTube()">⌕</button></header>${selected?`<main style="flex:1;overflow:auto;padding:12px"><button onclick="ytClose()" style="background:none;border:0;padding:7px 0;font-size:15px">‹ 返回视频列表</button><div style="aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden"><iframe src="https://www.youtube-nocookie.com/embed/${selected.id}?autoplay=1&playsinline=1&rel=0" title="YouTube 视频" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="width:100%;height:100%;border:0"></iframe></div><h3 style="font-size:17px;margin:15px 2px">${selected.title}</h3><p style="font-size:12px;color:#777">如果视频无法在小手机内播放，可以在 YouTube 打开。</p><a href="https://www.youtube.com/watch?v=${selected.id}" target="_blank" rel="noopener noreferrer" style="display:block;background:#f1f1f1;border-radius:18px;padding:12px;text-align:center;color:#111;text-decoration:none">在 YouTube 打开 ↗</a></main>`:`${ytTab==='search'?`<div style="padding:14px"><input id="yt-search" style="width:100%;padding:12px;border-radius:20px;border:1px solid #ddd" placeholder="搜索已添加的视频" value="${esc(ytQuery)}" oninput="ytQuery=this.value;document.getElementById('yt-results').innerHTML=ytVideos.filter(v=>(v.title+' '+v.id).toLowerCase().includes(ytQuery.toLowerCase())).map(ytVideoCard).join('')"></div>`:''}<main id="yt-results" style="overflow:auto;flex:1;padding:12px 14px">${ytTab==='shorts'||ytTab==='subs'?'<p style="text-align:center;color:#888;padding-top:45px">暂无内容</p>':found.length?found.map(card).join(''):'<p style="text-align:center;color:#888;padding-top:45px">暂无观看记录</p>'}</main>`}<footer style="display:flex;justify-content:space-around;padding:12px;border-top:1px solid #eee">${[['home','⌂','首页'],['shorts','▣','Shorts'],['subs','▤','订阅'],['you','◉','我的']].map(v=>`<button onclick="ytTab='${v[0]}';ytPlaying=null;ytQuery='';renderYouTube()" style="background:none;border:0;font-size:12px;color:${ytTab===v[0]?'#111':'#777'}"><div style="font-size:21px">${v[1]}</div>${v[2]}</button>`).join('')}</footer></div>`);
+ const card=v=>v.playableUrl?`<div style="margin-bottom:21px;cursor:pointer" onclick="ytPlay('${v.id}')"><div style="height:165px;border-radius:12px;background:linear-gradient(135deg,#ff0033,#ff9270);display:flex;align-items:center;justify-content:center;color:white;font-size:58px">🎮</div><div style="padding:10px 0"><b style="font-size:14px">${v.title}</b><div style="font-size:12px;color:#777;margin-top:4px">YouTube Playables · 点击打开</div></div></div>`:`<div style="margin-bottom:21px;cursor:pointer" onclick="ytPlay('${v.id}')"><div style="height:165px;border-radius:12px;background:#f1f1f1;overflow:hidden;position:relative"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" alt="视频缩略图" style="width:100%;height:100%;object-fit:cover" loading="lazy"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#ff0033;color:white;border-radius:12px;padding:9px 17px;font-size:23px">▶</span></div><div style="display:flex;gap:10px;padding-top:10px"><span style="width:34px;height:34px;border-radius:50%;background:#eee;display:grid;place-items:center">▶</span><div><b style="font-size:14px">${v.title}</b><div style="font-size:12px;color:#777;margin-top:4px">YouTube · 点击播放</div></div></div></div>`;
+ screen(`<div style="height:100%;background:#fff;color:#171717;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif"><header style="display:flex;align-items:center;justify-content:space-between;padding:17px 19px 12px;border-bottom:1px solid #eee"><b style="font-size:24px;letter-spacing:-1px"><span style="display:inline-block;background:#ff0033;color:#fff;border-radius:7px;padding:1px 8px;margin-right:5px;font-size:19px">▶</span>YouTube</b><button style="border:0;background:none;font-size:24px" onclick="ytTab=ytTab==='search'?'home':'search';ytPlaying=null;renderYouTube()">⌕</button></header>${selected?`<main style="flex:1;overflow:auto;padding:12px"><button onclick="ytClose()" style="background:none;border:0;padding:7px 0;font-size:15px">‹ 返回视频列表</button>${selected.playableUrl?`<div style="border-radius:12px;background:#fff2f2;text-align:center;padding:35px 14px"><div style="font-size:48px">🎮</div><p>这是 YouTube 小游戏，点击下方按钮打开游玩。</p></div><a href="${selected.playableUrl}" target="_blank" rel="noopener noreferrer" style="display:block;background:#ff0033;color:white;text-align:center;padding:14px;border-radius:12px;text-decoration:none;margin-top:12px">打开 YouTube 小游戏 ↗</a>`:`<div style="aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden"><iframe src="https://www.youtube-nocookie.com/embed/${selected.id}?autoplay=1&playsinline=1&rel=0" title="YouTube 视频" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="width:100%;height:100%;border:0"></iframe></div><h3 style="font-size:17px;margin:15px 2px">${selected.title}</h3><p style="font-size:12px;color:#777">如果视频无法在小手机内播放，可以在 YouTube 打开。</p><a href="https://www.youtube.com/watch?v=${selected.id}" target="_blank" rel="noopener noreferrer" style="display:block;background:#f1f1f1;border-radius:18px;padding:12px;text-align:center;color:#111;text-decoration:none">在 YouTube 打开 ↗</a>`}</main>`:`${ytTab==='search'?`<div style="padding:14px"><input id="yt-search" style="width:100%;padding:12px;border-radius:20px;border:1px solid #ddd" placeholder="搜索已添加的视频" value="${esc(ytQuery)}" oninput="ytQuery=this.value;document.getElementById('yt-results').innerHTML=ytVideos.filter(v=>(v.title+' '+v.id).toLowerCase().includes(ytQuery.toLowerCase())).map(ytVideoCard).join('')"></div>`:''}<main id="yt-results" style="overflow:auto;flex:1;padding:12px 14px">${ytTab==='shorts'||ytTab==='subs'?'<p style="text-align:center;color:#888;padding-top:45px">暂无内容</p>':found.length?found.map(card).join(''):'<p style="text-align:center;color:#888;padding-top:45px">暂无观看记录</p>'}</main>`}<footer style="display:flex;justify-content:space-around;padding:12px;border-top:1px solid #eee">${[['home','⌂','首页'],['shorts','▣','Shorts'],['subs','▤','订阅'],['you','◉','我的']].map(v=>`<button onclick="ytTab='${v[0]}';ytPlaying=null;ytQuery='';renderYouTube()" style="background:none;border:0;font-size:12px;color:${ytTab===v[0]?'#111':'#777'}"><div style="font-size:21px">${v[1]}</div>${v[2]}</button>`).join('')}</footer></div>`);
 }
-function ytVideoCard(v){return `<div style="margin-bottom:18px" onclick="ytPlay('${v.id}')"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" style="width:100%;border-radius:12px"><div style="font-size:14px;font-weight:600;margin-top:7px">${v.title} ▶</div></div>`}
+function ytVideoCard(v){if(v.playableUrl)return `<div style="margin-bottom:18px;cursor:pointer" onclick="ytPlay('${v.id}')"><div style="padding:30px;background:#fff1f1;border-radius:12px;text-align:center;font-size:36px">🎮</div><div style="font-size:14px;font-weight:600;margin-top:7px">${v.title}</div></div>`;return `<div style="margin-bottom:18px" onclick="ytPlay('${v.id}')"><img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" style="width:100%;border-radius:12px"><div style="font-size:14px;font-weight:600;margin-top:7px">${v.title} ▶</div></div>`}
 let notesView='list',notesQuery='',activeNote=-1,notesFolder='all';
 function noteText(n){return (n.title||'')+(n.body?'\n'+n.body:'')}
 function noteSaveActive(){if(activeNote<0||!notes[activeNote])return;const el=document.getElementById('iosnote-editor');if(!el)return;const lines=el.value.split('\n');notes[activeNote].title=lines.shift()||'새 메모';notes[activeNote].body=lines.join('\n');notes[activeNote].edited=Date.now();save('notes',notes)}
@@ -1763,26 +1764,22 @@ const initialPhoneRecents=[
 {name:'妈妈',number:'001',time:'2026-10-13T12:20:00',type:'incoming'}
 ];
 let phoneRecents=load('phoneRecents',initialPhoneRecents);
-// Replace obsolete idol-era call history once, keeping any new calls made afterward.
-if(!localStorage.getItem('phoneRecents_user_family_work_v1')){
- const previous=Array.isArray(phoneRecents)?phoneRecents:[];
- const additional=previous.filter(p=>!initialPhoneRecents.some(x=>x.name===p.name&&x.time===p.time)&&!['엄마','아빠','신유','최영재♡','한진','지훈','경민','020***1111','010****5274','02****3981'].includes(p.name)&&!/^2029-05-/.test(p.time||''));
- phoneRecents=initialPhoneRecents.concat(additional).slice(0,25);
- save('phoneRecents',phoneRecents);
- localStorage.setItem('phoneRecents_user_family_work_v1','1');
-}
-// Merge the added everyday calls into existing saves without erasing real gameplay calls.
-if(!localStorage.getItem('phoneRecents_everyday_calls_v2')){
- const seen=new Set((Array.isArray(phoneRecents)?phoneRecents:[]).map(p=>String(p.name)+'|'+String(p.time)));
- for(const entry of initialPhoneRecents){
-  const key=entry.name+'|'+entry.time;
-  if(!seen.has(key)){phoneRecents.push({...entry});seen.add(key);}
+// Non-destructive migration: preserve all existing call records and add missing defaults.
+// All contacts and scripted calls share the same persisted phoneRecents list.
+(function reconcilePhoneRecents(){
+ const existing=Array.isArray(phoneRecents)?phoneRecents:[];
+ const merged=[];
+ const seen=new Set();
+ for(const item of existing.concat(initialPhoneRecents)){
+  if(!item||!item.time||!item.name)continue;
+  const key=String(item.name)+'|'+String(item.time)+'|'+String(item.number||'');
+  if(seen.has(key))continue;
+  seen.add(key);merged.push(item);
  }
- phoneRecents.sort((a,b)=>new Date(b.time)-new Date(a.time));
- phoneRecents=phoneRecents.slice(0,25);
+ merged.sort((a,b)=>{const x=Date.parse(a.time),y=Date.parse(b.time);return (Number.isFinite(y)?y:0)-(Number.isFinite(x)?x:0)});
+ phoneRecents=merged;
  save('phoneRecents',phoneRecents);
- localStorage.setItem('phoneRecents_everyday_calls_v2','1');
-}
+})();
 function phoneRecentDate(stamp){
  const d=new Date(stamp);if(isNaN(d.getTime()))return '';
  const weekday=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
@@ -1798,7 +1795,7 @@ const phonePeople=[
 function phoneStartCall(name,number){
 phoneCallName=name||number||'알 수 없는 번호';phoneCallNumber=number||'';
 phoneRecents.unshift({name:phoneCallName,number:phoneCallNumber,time:new Date(typeof window.getStoryTime==='function'?window.getStoryTime():Date.parse('2026-10-24T19:30:00')).toISOString(),type:'outgoing'});
-phoneRecents=phoneRecents.slice(0,25);save('phoneRecents',phoneRecents);
+save('phoneRecents',phoneRecents);
 phoneCallActive=true;renderPhone();
 }
 function phoneStopCall(){phoneCallActive=false;renderPhone()}
@@ -2068,7 +2065,7 @@ body=`<h1>${titleMap[settingsPage]||'设置'}</h1><div class="stgroup">${content
 }
 screen(`<div class="iossettings">${settingsPage==='root'?'':`<button class="stback" onclick="settingsBack()">‹ 设置</button>`}<div class="stbody">${body}</div></div>`);
 }
-const galleryPhotos=["photos/51.jpeg", "photos/50.jpeg", "photos/49.jpeg", "photos/48.jpeg", "photos/47.jpeg", "photos/46.jpeg", "photos/45.jpeg", "photos/44.jpeg", "photos/43.jpeg", "photos/42.jpeg", "photos/01.jpeg", "photos/02.jpeg", "photos/03.jpeg", "photos/04.jpeg", "photos/05.jpeg", "photos/06.jpeg", "photos/07.jpeg", "photos/08.jpeg", "photos/09.jpeg", "photos/10.jpeg", "photos/11.jpeg", "photos/12.jpeg", "photos/13.jpeg", "photos/14.jpeg", "photos/15.jpeg", "photos/16.jpeg", "photos/17.jpeg", "photos/18.jpeg", "photos/19.jpeg", "photos/20.jpeg", "photos/21.jpeg", "photos/22.jpeg", "photos/23.jpeg", "photos/24.jpeg", "photos/25.jpeg", "photos/26.jpeg", "photos/27.jpeg", "photos/28.jpeg", "photos/29.jpeg", "photos/30.jpeg", "photos/31.jpeg", "photos/32.jpeg", "photos/33.jpeg", "photos/34.jpeg", "photos/35.jpeg", "photos/36.jpeg", "photos/37.png", "photos/38.jpeg", "photos/39.jpeg", "photos/40.jpeg", "photos/41.jpeg"];
+const galleryPhotos=["photos/70.jpeg", "photos/69.jpeg", "photos/68.jpeg", "photos/67.jpeg", "photos/66.jpeg", "photos/65.jpeg", "photos/64.jpeg", "photos/63.jpeg", "photos/62.jpeg", "photos/61.jpeg", "photos/60.jpeg", "photos/59.jpeg", "photos/58.jpeg", "photos/52.jpeg", "photos/53.jpeg", "photos/54.jpeg", "photos/55.jpeg", "photos/56.jpeg", "photos/57.jpeg", "photos/51.jpeg", "photos/50.jpeg", "photos/49.jpeg", "photos/48.jpeg", "photos/47.jpeg", "photos/46.jpeg", "photos/45.jpeg", "photos/44.jpeg", "photos/43.jpeg", "photos/42.jpeg", "photos/01.jpeg", "photos/02.jpeg", "photos/03.jpeg", "photos/04.jpeg", "photos/05.jpeg", "photos/06.jpeg", "photos/07.jpeg", "photos/08.jpeg", "photos/09.jpeg", "photos/10.jpeg", "photos/11.jpeg", "photos/12.jpeg", "photos/13.jpeg", "photos/14.jpeg", "photos/15.jpeg", "photos/16.jpeg", "photos/17.jpeg", "photos/18.jpeg", "photos/19.jpeg", "photos/20.jpeg", "photos/21.jpeg", "photos/22.jpeg", "photos/23.jpeg", "photos/24.jpeg", "photos/25.jpeg", "photos/26.jpeg", "photos/27.jpeg", "photos/28.jpeg", "photos/29.jpeg", "photos/30.jpeg", "photos/31.jpeg", "photos/32.jpeg", "photos/33.jpeg", "photos/34.jpeg", "photos/35.jpeg", "photos/36.jpeg", "photos/37.png", "photos/38.jpeg", "photos/39.jpeg", "photos/40.jpeg", "photos/41.jpeg"];
 // Fixed ending photo: camera captures must never replace the WVS story image.
 const wvsFixedStoryPhoto="";
 function galleryImageFallback(img){
@@ -2081,7 +2078,7 @@ function galleryImageFallback(img){
 // Shared photo-category metadata for Photos, Instagram and KKT.
 const dqPhotoAlbumNames=['美食','风景','申惟♡','日常','宠物','申惟童年照'];
 // Default placement for numbered original gallery photos.
-const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'申惟童年照',37:'申惟童年照',31:'申惟童年照',30:'日常',42:'宠物',43:'宠物',44:'宠物',45:'宠物',46:'宠物',47:'宠物',48:'宠物',49:'宠物',50:'宠物',51:'宠物'};
+const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'申惟童年照',37:'申惟童年照',31:'申惟童年照',30:'日常',42:'宠物',43:'宠物',44:'宠物',45:'宠物',46:'宠物',47:'宠物',48:'宠物',49:'宠物',50:'宠物',51:'宠物',52:'美食',53:'美食',54:'美食',55:'美食',56:'美食',57:'美食',58:'日常',59:'日常',60:'日常',61:'风景',62:'风景',63:'风景',64:'申惟♡',65:'日常',66:'风景',67:'风景',68:'风景',69:'风景',70:'风景'};
 (function dqMigratePhotoAlbums(){
  try{
   const key='dq_photo_categories_v1',flag='dq_photo_initial_moves_20261027_v1';
@@ -2094,6 +2091,45 @@ const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'�
   localStorage.setItem(key,JSON.stringify(map));
   localStorage.setItem(flag,'1');
  }catch(e){console.warn('Album initialization:',e)}
+})();
+// Introduced food photos are assigned without altering any existing saved moves.
+(function dqInitFoodPhotos(){
+ try{
+  const key='dq_photo_categories_v1';
+  const map=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  for(let n=52;n<=57;n++){
+   const url='photos/'+n+'.jpeg';
+   if(!Object.prototype.hasOwnProperty.call(map,url))map[url]='美食';
+  }
+  localStorage.setItem(key,JSON.stringify(map));
+ }catch(e){console.warn('Food photo initialization:',e)}
+})();
+(function dqInitLandscapePhotos(){
+ try{
+  const key='dq_photo_categories_v1';
+  const map=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  for(let n=61;n<=63;n++){
+   const url='photos/'+n+'.jpeg';
+   if(!Object.prototype.hasOwnProperty.call(map,url))map[url]='风景';
+  }
+  localStorage.setItem(key,JSON.stringify(map));
+ }catch(e){console.warn('Landscape photo initialization:',e)}
+})();
+(function dqInitShinyuPhoto64(){
+ try{
+  const key='dq_photo_categories_v1';
+  const map=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  if(!Object.prototype.hasOwnProperty.call(map,'photos/64.jpeg'))map['photos/64.jpeg']='申惟♡';
+  localStorage.setItem(key,JSON.stringify(map));
+ }catch(e){console.warn('Shinyu photo initialization:',e)}
+})();
+(function dqInitDailyPhoto65(){
+ try{
+  const key='dq_photo_categories_v1';
+  const map=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  if(!Object.prototype.hasOwnProperty.call(map,'photos/65.jpeg'))map['photos/65.jpeg']='日常';
+  localStorage.setItem(key,JSON.stringify(map));
+ }catch(e){console.warn('Daily photo initialization:',e)}
 })();
 function dqPhotoCategory(url){
  const map=(()=>{try{return JSON.parse(localStorage.getItem('dq_photo_categories_v1')||'{}')}catch(e){return {}}})();
@@ -2960,7 +2996,6 @@ function changePlayerName(){
  function saveShinyuStoryRecent(c){
   // Keep the scripted 19:30 call in the same persisted list as ordinary calls.
   const flag='shinyu_oct24_1930_recent_saved_v1';
-  if(localStorage.getItem(flag)==='1')return;
   try{
     const key='phoneRecents';
     let list=JSON.parse(localStorage.getItem(key)||'[]');
@@ -2969,7 +3004,6 @@ function changePlayerName(){
     if(!list.some(x=>x&&x.name==='申惟'&&x.time===stamp)){
       list.unshift({name:'申惟',number:'003',time:stamp,type:c.answeredAt?'incoming':'missed'});
       list.sort((a,b)=>new Date(b.time)-new Date(a.time));
-      list=list.slice(0,25);
       localStorage.setItem(key,JSON.stringify(list));
     }
     localStorage.setItem(flag,'1');
