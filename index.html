@@ -1490,7 +1490,7 @@ function igChronologicalFeed(){
   entries.sort((a,b)=>order(b)-order(a));
   return entries.map(e=>e.own?igOwnArticle(e.p,e.i):igShinyuArticle(e.p,e.i)).join('');
 }
-function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='profile'?renderPrivateIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igChronologicalFeed()}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab!=='profile'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button title="Reels">▣</button><button title="DM">➤</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
+function renderIG(){screen(`<div class="page ig-page"><div class="ig-top"><button aria-label="새 게시물" onclick="igStartPost()">＋</button><b>Instagram</b><button aria-label="알림">${igIcon('heart')}</button></div><div class="ig-main">${igTab==='reels'?dqIGReelPage():igTab==='profile'?renderPrivateIG():`<div class="ig-stories">${igKnownStories.map((p,i)=>`<button type="button" aria-disabled="true" onclick="return false">${igStoryAvatar(p.label,p.image,p.mine)}<small>${p.name}</small></button>`).join('')}</div>${igChronologicalFeed()}`}</div><div class="ig-bottom"><button onclick="igTab='feed';render()" class="${igTab==='feed'?'selected':''}" title="홈"><svg viewBox='0 0 24 24' width='26' height='26' fill='currentColor'><path d='M3 10.4 12 3l9 7.4V21h-6.5v-7h-5v7H3z'/></svg></button><button onclick="igTab='reels';render()" class="${igTab==='reels'?'selected':''}" title="Reels">▣</button><button title="DM">➤</button><button title="검색">⌕</button><button onclick="igTab='profile';render()" class="${igTab==='profile'?'selected':''}" title="프로필">${igProfileIcon()}</button></div></div>`)}
 let igStoryIndex=0,igStoryStarted=0,igStoryTimer=null,igStoryPaused=false;
 function closeIGStory(){if(igStoryTimer){clearInterval(igStoryTimer);igStoryTimer=null}igStoryPaused=false;render()}
 function openIGStory(i=0){
@@ -2065,7 +2065,7 @@ body=`<h1>${titleMap[settingsPage]||'设置'}</h1><div class="stgroup">${content
 }
 screen(`<div class="iossettings">${settingsPage==='root'?'':`<button class="stback" onclick="settingsBack()">‹ 设置</button>`}<div class="stbody">${body}</div></div>`);
 }
-const galleryPhotos=["photos/70.jpeg", "photos/69.jpeg", "photos/68.jpeg", "photos/67.jpeg", "photos/66.jpeg", "photos/65.jpeg", "photos/64.jpeg", "photos/63.jpeg", "photos/62.jpeg", "photos/61.jpeg", "photos/60.jpeg", "photos/59.jpeg", "photos/58.jpeg", "photos/52.jpeg", "photos/53.jpeg", "photos/54.jpeg", "photos/55.jpeg", "photos/56.jpeg", "photos/57.jpeg", "photos/51.jpeg", "photos/50.jpeg", "photos/49.jpeg", "photos/48.jpeg", "photos/47.jpeg", "photos/46.jpeg", "photos/45.jpeg", "photos/44.jpeg", "photos/43.jpeg", "photos/42.jpeg", "photos/01.jpeg", "photos/02.jpeg", "photos/03.jpeg", "photos/04.jpeg", "photos/05.jpeg", "photos/06.jpeg", "photos/07.jpeg", "photos/08.jpeg", "photos/09.jpeg", "photos/10.jpeg", "photos/11.jpeg", "photos/12.jpeg", "photos/13.jpeg", "photos/14.jpeg", "photos/15.jpeg", "photos/16.jpeg", "photos/17.jpeg", "photos/18.jpeg", "photos/19.jpeg", "photos/20.jpeg", "photos/21.jpeg", "photos/22.jpeg", "photos/23.jpeg", "photos/24.jpeg", "photos/25.jpeg", "photos/26.jpeg", "photos/27.jpeg", "photos/28.jpeg", "photos/29.jpeg", "photos/30.jpeg", "photos/31.jpeg", "photos/32.jpeg", "photos/33.jpeg", "photos/34.jpeg", "photos/35.jpeg", "photos/36.jpeg", "photos/37.png", "photos/38.jpeg", "photos/39.jpeg", "photos/40.jpeg", "photos/41.jpeg"];
+const galleryPhotos=["photos/78.jpeg", "photos/77.jpeg", "photos/76.jpeg", "photos/75.jpeg", "photos/74.jpeg", "photos/73.jpeg", "photos/72.jpeg", "photos/71.jpeg", "photos/70.jpeg", "photos/69.jpeg", "photos/68.jpeg", "photos/67.jpeg", "photos/66.jpeg", "photos/65.jpeg", "photos/64.jpeg", "photos/63.jpeg", "photos/62.jpeg", "photos/61.jpeg", "photos/60.jpeg", "photos/59.jpeg", "photos/58.jpeg", "photos/52.jpeg", "photos/53.jpeg", "photos/54.jpeg", "photos/55.jpeg", "photos/56.jpeg", "photos/57.jpeg", "photos/51.jpeg", "photos/50.jpeg", "photos/49.jpeg", "photos/48.jpeg", "photos/47.jpeg", "photos/46.jpeg", "photos/45.jpeg", "photos/44.jpeg", "photos/43.jpeg", "photos/42.jpeg", "photos/01.jpeg", "photos/02.jpeg", "photos/03.jpeg", "photos/04.jpeg", "photos/05.jpeg", "photos/06.jpeg", "photos/07.jpeg", "photos/08.jpeg", "photos/09.jpeg", "photos/10.jpeg", "photos/11.jpeg", "photos/12.jpeg", "photos/13.jpeg", "photos/14.jpeg", "photos/15.jpeg", "photos/16.jpeg", "photos/17.jpeg", "photos/18.jpeg", "photos/19.jpeg", "photos/20.jpeg", "photos/21.jpeg", "photos/22.jpeg", "photos/23.jpeg", "photos/24.jpeg", "photos/25.jpeg", "photos/26.jpeg", "photos/27.jpeg", "photos/28.jpeg", "photos/29.jpeg", "photos/30.jpeg", "photos/31.jpeg", "photos/32.jpeg", "photos/33.jpeg", "photos/34.jpeg", "photos/35.jpeg", "photos/36.jpeg", "photos/37.png", "photos/38.jpeg", "photos/39.jpeg", "photos/40.jpeg", "photos/41.jpeg"];
 // Fixed ending photo: camera captures must never replace the WVS story image.
 const wvsFixedStoryPhoto="";
 function galleryImageFallback(img){
@@ -2078,7 +2078,7 @@ function galleryImageFallback(img){
 // Shared photo-category metadata for Photos, Instagram and KKT.
 const dqPhotoAlbumNames=['美食','风景','申惟♡','日常','宠物','申惟童年照'];
 // Default placement for numbered original gallery photos.
-const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'申惟童年照',37:'申惟童年照',31:'申惟童年照',30:'日常',42:'宠物',43:'宠物',44:'宠物',45:'宠物',46:'宠物',47:'宠物',48:'宠物',49:'宠物',50:'宠物',51:'宠物',52:'美食',53:'美食',54:'美食',55:'美食',56:'美食',57:'美食',58:'日常',59:'日常',60:'日常',61:'风景',62:'风景',63:'风景',64:'申惟♡',65:'日常',66:'风景',67:'风景',68:'风景',69:'风景',70:'风景'};
+const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'申惟童年照',37:'申惟童年照',31:'申惟童年照',30:'日常',42:'宠物',43:'宠物',44:'宠物',45:'宠物',46:'宠物',47:'宠物',48:'宠物',49:'宠物',50:'宠物',51:'宠物',52:'美食',53:'美食',54:'美食',55:'美食',56:'美食',57:'美食',58:'日常',59:'日常',60:'日常',61:'风景',62:'风景',63:'风景',64:'申惟♡',65:'日常',66:'风景',67:'风景',68:'风景',69:'风景',70:'风景',71:'申惟童年照',72:'申惟童年照',73:'申惟童年照',74:'申惟童年照',75:'申惟童年照',76:'申惟童年照',77:'申惟童年照',78:'申惟童年照'};
 (function dqMigratePhotoAlbums(){
  try{
   const key='dq_photo_categories_v1',flag='dq_photo_initial_moves_20261027_v1';
@@ -4080,4 +4080,20 @@ simRestoreShots();
  const oldStart=window.startNewGame;
  if(typeof oldStart==='function')window.startNewGame=function(){try{localStorage.removeItem(cacheKey)}catch(e){};return oldStart.apply(this,arguments)};
 })();
-</script></body></html>
+</script>
+<style id="dq-ig-reel-style">
+.dq-reel-wrap{background:#080808;color:white;min-height:calc(100% - 12px);padding:12px 10px 20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.dq-reel-title{width:100%;font-size:15px;font-weight:700;padding:5px 3px}
+.dq-reel-frame{width:100%;max-width:390px;height:min(66vh,610px);min-height:380px;background:#161616;border-radius:12px;overflow:hidden;border:1px solid #2b2b2b}
+.dq-reel-frame iframe{width:100%;height:100%;border:0;background:#fff}
+.dq-reel-open{display:block;text-align:center;background:#fff;color:#111!important;text-decoration:none;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:700;width:100%;max-width:390px}
+.dq-reel-help{color:#aab0b9;font-size:11px;line-height:1.6;text-align:center;max-width:390px}
+</style>
+<script id="dq-ig-reel-player">
+function dqIGReelPage(){
+ const url='https://www.instagram.com/reel/De8zZ87JZfO/';
+ const embed='https://www.instagram.com/reel/De8zZ87JZfO/embed/';
+ return `<section class="dq-reel-wrap"><div class="dq-reel-title">Reels · 短视频</div><div class="dq-reel-frame"><iframe src="${embed}" title="Instagram Reel" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div><a class="dq-reel-open" href="${url}" target="_blank" rel="noopener noreferrer">▶ 如果无法播放，点击前往 Instagram 观看</a><div class="dq-reel-help">部分 Instagram 视频会限制网页内播放。若出现空白或提示登录，可使用上方按钮打开原视频。</div></section>`;
+}
+</script>
+</body></html>
