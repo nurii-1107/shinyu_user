@@ -4181,4 +4181,21 @@ function fixPhoto(){
 const old=window.renderKKT;
 window.renderKKT=function(...args){add();const result=old.apply(this,args);fixPhoto();return result};
 const timer=setInterval(()=>{if(ready()){add();clearInterval(timer)}},300);add();
+// The original app can re-render the chat without invoking window.renderKKT.
+// Watch the actual chat DOM so the photo is always applied after rendering.
+let dqFixing=false;
+const dqObserver=new MutationObserver(()=>{
+ if(dqFixing)return;
+ const root=document.getElementById('kkt-scroll');
+ if(!root||!root.querySelector('.kkt-reply-message'))return;
+ if(![...root.querySelectorAll('.kkt-reply-message')].some(x=>x.textContent.trim()==='[照片]'))return;
+ dqFixing=true;
+ try{fixPhoto()}finally{dqFixing=false}
+});
+dqObserver.observe(document.documentElement,{childList:true,subtree:true});
+setInterval(()=>{
+ const root=document.getElementById('kkt-scroll');
+ if(root&&[...root.querySelectorAll('.kkt-reply-message')].some(x=>x.textContent.trim()==='[照片]'))fixPhoto();
+},1200);
+fixPhoto();
 })();</script></body></html>
