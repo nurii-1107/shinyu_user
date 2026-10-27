@@ -1176,7 +1176,7 @@ function cameraTakePhoto(){
  const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
  const context=c.getContext('2d');if(cameraFacing==='user'){context.translate(c.width,0);context.scale(-1,1)}
  context.drawImage(v,0,0,c.width,c.height);
- const data=c.toDataURL('image/jpeg',.78);galleryPhotos.splice(1,0,data);const shotId=String(Date.now())+'-'+Math.random().toString(36).slice(2);simShotIds.set(data,shotId);simStoreShot(shotId,data).then(ok=>{if(!ok)notify('照片存储失败，请检查浏览器存储空间')});
+ const data=c.toDataURL('image/jpeg',.78);galleryPhotos.unshift(data);const shotId=String(Date.now())+'-'+Math.random().toString(36).slice(2);simShotIds.set(data,shotId);simStoreShot(shotId,data).then(ok=>{if(!ok)notify('照片存储失败，请检查浏览器存储空间')});
  const flash=document.createElement('div');flash.className='sim-camera-flash';document.querySelector('.sim-camera')?.appendChild(flash);setTimeout(()=>flash.remove(),190);
  const thumb=document.querySelector('.sim-camera-thumb');if(thumb){thumb.innerHTML=`<img src="${data}" alt="최근 사진">`}
 }
@@ -1333,7 +1333,10 @@ async function simRestoreShots(){
   const db=await simPhotoDB;if(!db)return;
   const shots=await new Promise(resolve=>{try{const tx=db.transaction('shots','readonly');const r=tx.objectStore('shots').getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>resolve([])}catch(e){resolve([])}});
   const sorted=shots.filter(x=>x&&typeof x.data==='string').sort((a,b)=>String(b.id).localeCompare(String(a.id)));
-  sorted.forEach((x,i)=>{simShotIds.set(x.data,x.id);if(!galleryPhotos.includes(x.data))galleryPhotos.splice(1+i,0,x.data)});
+  sorted.forEach(x=>{simShotIds.set(x.data,x.id);if(!galleryPhotos.includes(x.data))galleryPhotos.unshift(x.data)});
+  // All captured photos appear first, newest first, including photos taken this session.
+  const captured=galleryPhotos.filter(url=>simShotIds.has(url)).sort((a,b)=>String(simShotIds.get(b)).localeCompare(String(simShotIds.get(a))));
+  galleryPhotos.splice(0,galleryPhotos.length,...captured,...galleryPhotos.filter(url=>!simShotIds.has(url)));
   if(typeof igMyPosts!=='undefined'){
     igMyPosts.forEach(p=>{if(typeof p.image==='string'&&p.image.startsWith('simshot://')){const found=sorted.find(x=>x.id===p.image.slice(10));if(found)p.image=found.data}});
   }
@@ -1368,7 +1371,7 @@ function igRenderPhotoPicker(){const imgs=galleryPhotos;const chosen=igDraftPhot
 function igShowComposer(markup){document.querySelector('.ig-create-page')?.remove();document.querySelector('.ig-page')?.insertAdjacentHTML('beforeend',markup)}
 function igGoCaption(){if(igDraftPhoto<0){notify('사진을 선택해 주세요.');return}igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igRenderPhotoPicker()">‹ 뒤로</button><b>새 게시물</b><button class="ig-next" onclick="igPreviewDraft()">다음</button></div><div class="ig-create-scroll"><div class="ig-create-caption"><textarea id="ig-new-caption" maxlength="2200" placeholder="문구 입력...">${esc(igDraftCaption)}</textarea><img src="${galleryPhotos[igDraftPhoto]}"></div><div style="padding:17px;color:#555;border-bottom:1px solid #eee">위치 추가　　›</div><div style="padding:17px;color:#555">사람 태그하기　　›</div></div></div>`)}
 function igPreviewDraft(){igDraftCaption=document.getElementById('ig-new-caption')?.value||'';igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="igGoCaption()">‹ 뒤로</button><b>미리보기</b><button class="ig-next" onclick="igPublishDraft()">공유</button></div><div class="ig-create-scroll"><div class="ig-create-preview"><b>yu._.1107</b><div style="height:12px"></div><img src="${galleryPhotos[igDraftPhoto]}"><p style="white-space:pre-wrap">${esc(igDraftCaption)}</p></div></div></div>`)}
-function igPublishDraft(){if(igDraftPhoto<0)return;const item={image:galleryPhotos[igDraftPhoto],album:dqPhotoCategory(galleryPhotos[igDraftPhoto]),caption:igDraftCaption,date:'방금 전',id:Date.now()};igMyPosts.unshift(item);igEngagementStage['own-'+item.id]='pending';save('igEngagementStage',igEngagementStage);simPersistIGPosts();igTab='feed';renderIG()}
+function igPublishDraft(){if(igDraftPhoto<0)return;const item={image:galleryPhotos[igDraftPhoto],album:dqPhotoCategory(galleryPhotos[igDraftPhoto]),caption:igDraftCaption,date:'방금 전',id:Date.now(),publishedStoryAt:(typeof window.getStoryTime==='function'?window.getStoryTime().getTime():Date.now())};igMyPosts.unshift(item);igEngagementStage['own-'+item.id]='pending';save('igEngagementStage',igEngagementStage);simPersistIGPosts();igTab='feed';renderIG()}
 function igViewOwnPost(i){const p=igMyPosts[i];if(!p)return;igShowComposer(`<div class="ig-create-page"><div class="ig-create-head"><button onclick="renderIG()">‹ 뒤로</button><b>게시물</b><span></span></div><div class="ig-create-scroll">${igOwnArticle(p,i)}</div></div>`)}
 let igCommentCounts=load('igCommentCounts',{}),igPostLikes=load('igPostLikes',{});
 function igCount(id,type,base){const extra=type==='comment'?(comments[id]||[]).length:0;return base+extra}
@@ -1462,19 +1465,27 @@ function igSubmitComment(e,id){e.preventDefault();const v=document.getElementByI
 // Feed order: the 21:30 story post must appear above USER's earlier posts.
 // Keep original array indices so post menus and deletion still target the right post.
 function igChronologicalFeed(){
+  // Each post has its own story timestamp; array insertion order is NOT its date.
+  // Keep original indices so post menus, deletions and comment IDs stay stable.
   const entries=[
     ...igMyPosts.map((p,i)=>({p,i,own:true})),
     ...igShinyuPosts.map((p,i)=>({p,i,own:false}))
   ];
   function order(e){
     const p=e.p;
-    if(p.id==='dq-2130-user')return 213002;
-    if(p.id==='dq-2130-shinyu')return 213001;
-    // All regular USER posts predate the scripted 21:30 scene.
-    if(e.own)return 200000+Math.min(e.i,999)*-1;
+    if(p.id==='dq-2130-user'||p.id==='dq-2130-shinyu')return Date.parse('2026-10-24T21:30:00')+(p.id==='dq-2130-user'?1:0);
+    if(Number.isFinite(Number(p.publishedStoryAt))&&Number(p.publishedStoryAt)>1000000000000)return Number(p.publishedStoryAt);
+    // Legacy user posts have a unique real-world creation id, but no in-game date.
+    // They are older than the current newly published posts and keep their relative order.
+    if(e.own){
+      const date=String(p.date||'');
+      const m=date.match(/(?:2026[-/.])?(\d{1,2})月(\d{1,2})日(?:\s*(\d{1,2}):(\d{2}))?/);
+      if(m)return new Date(2026,Number(m[1])-1,Number(m[2]),Number(m[3]||0),Number(m[4]||0)).getTime();
+      return Date.parse('2026-10-24T20:00:00')-e.i*1000;
+    }
     const date=String(p.date||'');
-    const m=date.match(/10月(\d{1,2})日/);
-    return m?Number(m[1])*100:100;
+    const m=date.match(/(\d{1,2})月(\d{1,2})日(?:\s*(\d{1,2}):(\d{2}))?/);
+    return m?new Date(2026,Number(m[1])-1,Number(m[2]),Number(m[3]||0),Number(m[4]||0)).getTime():0;
   }
   entries.sort((a,b)=>order(b)-order(a));
   return entries.map(e=>e.own?igOwnArticle(e.p,e.i):igShinyuArticle(e.p,e.i)).join('');
@@ -2068,10 +2079,26 @@ function galleryImageFallback(img){
   if(match)img.src='https://nurii-1107.github.io/shinyu_user/photos/'+match[1];
 }
 // Shared photo-category metadata for Photos, Instagram and KKT.
-const dqPhotoAlbumNames=['美食','风景','申惟♡'];
+const dqPhotoAlbumNames=['美食','风景','申惟♡','日常','宠物','申惟童年照'];
+// Default placement for numbered original gallery photos.
+const dqInitialAlbumByNumber={41:'宠物',23:'宠物',39:'申惟童年照',38:'申惟童年照',37:'申惟童年照',31:'申惟童年照',30:'日常'};
+(function dqMigratePhotoAlbums(){
+ try{
+  const key='dq_photo_categories_v1',flag='dq_photo_initial_moves_20261027_v1';
+  const map=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  for(const url of galleryPhotos){
+   if(typeof map[url]==='string'&&map[url]==='童年照')map[url]='申惟童年照';
+   const m=String(url).match(/(?:^|\/)0?(\d+)\.(?:jpeg|jpg|png)(?:[?#].*)?$/i);
+   if(m&&!localStorage.getItem(flag)&&dqInitialAlbumByNumber[Number(m[1])])map[url]=dqInitialAlbumByNumber[Number(m[1])];
+  }
+  localStorage.setItem(key,JSON.stringify(map));
+  localStorage.setItem(flag,'1');
+ }catch(e){console.warn('Album initialization:',e)}
+})();
 function dqPhotoCategory(url){
  const map=(()=>{try{return JSON.parse(localStorage.getItem('dq_photo_categories_v1')||'{}')}catch(e){return {}}})();
- return map[url]||'申惟♡';
+ const key=typeof simShotIds!=='undefined'&&simShotIds.has(url)?'shot:'+simShotIds.get(url):url;
+ return map[key]||map[url]||(typeof url==='string'&&url.startsWith('data:image/')?'日常':(dqInitialAlbumByNumber[Number((String(url).match(/(?:^|\/)0?(\d+)\.(?:jpeg|jpg|png)(?:[?#].*)?$/i)||[])[1])]||'申惟♡'));
 }
 function dqPhotosInAlbum(album){return galleryPhotos.map((url,index)=>({url,index})).filter(p=>!album||dqPhotoCategory(p.url)===album)}
 let dqPhotoAlbum='';
@@ -2080,7 +2107,8 @@ function dqMovePhoto(index,album){
  if(!dqPhotoAlbumNames.includes(album)||!galleryPhotos[index])return;
  const url=galleryPhotos[index];
  let map={};try{map=JSON.parse(localStorage.getItem('dq_photo_categories_v1')||'{}')||{}}catch(e){}
- map[url]=album;
+ const key=typeof simShotIds!=='undefined'&&simShotIds.has(url)?'shot:'+simShotIds.get(url):url;
+ map[key]=album;
  localStorage.setItem('dq_photo_categories_v1',JSON.stringify(map));
  // Only the source photo's current category changes; published IG posts already
  // store their own album snapshot, and existing chat messages are not touched.
@@ -2100,7 +2128,7 @@ function dqChoosePhotoAlbum(index){
  viewer.appendChild(sheet);
 }
 function renderPhotos(){dqPhotoAlbum='';dqRenderAlbums()}
-function dqRenderAlbums(){galleryIndex=-1;screen(`<div class="page dq-album-page" style="min-height:100%;background:#fff"><div class="dq-album-head"><h1>相簿</h1><small>照片 · ${galleryPhotos.length} 张</small></div><div class="dq-album-list">${dqPhotoAlbumNames.map((name,i)=>{const photos=dqPhotosInAlbum(name);return `<button class="dq-album-card" onclick="dqOpenAlbum('${name}')"><div class="dq-album-cover">${photos.length?`<img src="${photos[0].url}" onerror="galleryImageFallback(this)">`:`<span>${['🍰','🌿','♡'][i]}</span>`}</div><b>${name}</b><small>${photos.length} 张照片</small></button>`}).join('')}</div><div class="dq-album-all" onclick="dqOpenAlbum('')">所有照片　<span>${galleryPhotos.length} 张 ›</span></div></div>`)}
+function dqRenderAlbums(){galleryIndex=-1;screen(`<div class="page dq-album-page" style="min-height:100%;background:#fff"><div class="dq-album-head"><h1>相簿</h1><small>照片 · ${galleryPhotos.length} 张</small></div><div class="dq-album-list">${dqPhotoAlbumNames.map((name,i)=>{const photos=dqPhotosInAlbum(name);return `<button class="dq-album-card" onclick="dqOpenAlbum('${name}')"><div class="dq-album-cover">${photos.length?`<img src="${photos[0].url}" onerror="galleryImageFallback(this)">`:`<span>${['🍰','🌿','♡','📷'][i]}</span>`}</div><b>${name}</b><small>${photos.length} 张照片</small></button>`}).join('')}</div><div class="dq-album-all" onclick="dqOpenAlbum('')">所有照片　<span>${galleryPhotos.length} 张 ›</span></div></div>`)}
 function dqOpenAlbum(album){dqPhotoAlbum=album;const photos=dqPhotosInAlbum(album);screen(`<div class="page dq-album-page" style="min-height:100%;background:#fff"><div class="dq-album-nav"><button onclick="dqRenderAlbums()">‹ 相簿</button><b>${album||'所有照片'}</b><span>${photos.length} 张</span></div>${photos.length?`<div class="gallery-grid">${dqPhotoGrid(album)}</div>`:`<div class="dq-album-empty"><div>♡</div>还没有照片</div>`}</div>`)}
 function openGalleryPhoto(i){galleryIndex=Math.max(0,Math.min(galleryPhotos.length-1,i));showGalleryPhoto()}
 function showGalleryPhoto(){const existing=document.querySelector('.gallery-viewer');if(existing)existing.remove();const viewer=document.createElement('div');viewer.className='gallery-viewer';const group=dqPhotosInAlbum(dqPhotoAlbum);const at=group.findIndex(p=>p.index===galleryIndex);viewer.innerHTML=`<div class="gallery-top"><button onclick="closeGalleryPhoto()">‹ 返回</button><span>${at+1} / ${group.length} · ${dqPhotoAlbum||'所有照片'}</span><button class="dq-move-action" onclick="dqChoosePhotoAlbum(${galleryIndex})">移动</button></div><div class="gallery-image"><img src="${galleryPhotos[galleryIndex]}" onerror="galleryImageFallback(this)" alt="照片 ${galleryIndex+1}"></div><div class="gallery-foot">左右滑动切换照片</div>`;document.querySelector('#phone').appendChild(viewer);let startX=0;viewer.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});viewer.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-startX;if(Math.abs(d)>45){const next=Math.max(0,Math.min(group.length-1,at+(d<0?1:-1)));galleryIndex=group[next].index;showGalleryPhoto()}},{passive:true})}
