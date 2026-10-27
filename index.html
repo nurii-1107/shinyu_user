@@ -2273,34 +2273,65 @@ function birthdayEndCall(){
  const source='data:audio/mpeg;base64,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qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkxBTUUzLjEwMKqqqqr/+xDE1gPAAAGkAAAAIAAANIAAAASqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7EMTWA8AAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//sQxNYDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr/+xDE1gPAAAGkAAAAIAAANIAAAASqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7EMTWA8AAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//sQxNYDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=';
  let ctx=null,buffer=null,loading=null,activeNode=null,activeAudio=null;
  function stop(){
-  if(activeNode){try{activeNode.stop(0)}catch(e){}try{activeNode.disconnect()}catch(e){}activeNode=null}
+  if(activeNode){try{activeNode.stop()}catch(e){}try{activeNode.disconnect()}catch(e){}activeNode=null}
   if(activeAudio){try{activeAudio.pause();activeAudio.currentTime=0}catch(e){}activeAudio=null}
  }
  window.stopKktNotificationSound=stop;
+ function ensureContext(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return null;
+  if(!ctx)ctx=new AC();
+  if(ctx.state!=='running')ctx.resume().catch(()=>{});
+  return ctx;
+ }
  function unlock(){
   try{
-   const AC=window.AudioContext||window.webkitAudioContext;
-   if(!AC)return;
-   if(!ctx)ctx=new AC();
-   if(ctx.state==='suspended')ctx.resume().catch(()=>{});
-   if(!loading)loading=fetch(source).then(r=>r.arrayBuffer()).then(b=>ctx.decodeAudioData(b)).then(decoded=>buffer=decoded).catch(()=>{});
+   const c=ensureContext();if(!c)return;
+   // iOS Safari is inconsistent about fetch(data:audio/...). Decode the embedded MP3 directly.
+   if(!loading){
+    loading=Promise.resolve().then(()=>{
+     const encoded=source.slice(source.indexOf(',')+1);
+     const raw=atob(encoded);const bytes=new Uint8Array(raw.length);
+     for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+     return c.decodeAudioData(bytes.buffer);
+    }).then(b=>{buffer=b;return b}).catch(()=>{loading=null});
+   }
+  }catch(e){}
+ }
+ function fallbackChime(c){
+  try{
+   const now=c.currentTime+.015;
+   [0,.105].forEach((delay,i)=>{
+    const osc=c.createOscillator(),gain=c.createGain();
+    osc.type='sine';osc.frequency.setValueAtTime(i?1046:784,now+delay);
+    gain.gain.setValueAtTime(.0001,now+delay);
+    gain.gain.exponentialRampToValueAtTime(.12,now+delay+.012);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+delay+.18);
+    osc.connect(gain);gain.connect(c.destination);
+    osc.start(now+delay);osc.stop(now+delay+.2);
+   });
   }catch(e){}
  }
  window.playKktNotificationSound=function(){
   stop();
   try{
-   if(ctx&&buffer&&ctx.state==='running'){
-    const node=ctx.createBufferSource();node.buffer=buffer;node.connect(ctx.destination);activeNode=node;
-    node.onended=()=>{if(activeNode===node)activeNode=null};node.start(0);return;
+   const c=ensureContext();
+   if(c&&c.state==='running'){
+    if(buffer){
+     const node=c.createBufferSource();node.buffer=buffer;node.connect(c.destination);activeNode=node;
+     node.onended=()=>{if(activeNode===node)activeNode=null};node.start();return;
+    }
+    fallbackChime(c);return;
    }
    const a=new Audio(source);a.volume=.85;activeAudio=a;
-   a.onended=()=>{if(activeAudio===a)activeAudio=null};
    a.play().catch(()=>{if(activeAudio===a)activeAudio=null});
   }catch(e){}
  };
- document.addEventListener('touchstart',unlock,{passive:true});
- document.addEventListener('pointerdown',unlock,{passive:true});
- document.addEventListener('keydown',unlock);
+ // Unlock on every user gesture, including Safari's first touch inside the simulated phone.
+ document.addEventListener('touchstart',unlock,{passive:true,capture:true});
+ document.addEventListener('pointerdown',unlock,{passive:true,capture:true});
+ document.addEventListener('click',unlock,{capture:true});
+ document.addEventListener('keydown',unlock,{capture:true});
 })();
 </script><style>
 .applemusiclogo{background:linear-gradient(145deg,#fb647e,#ed2752)!important;color:white!important;font-size:36px!important}
@@ -2443,16 +2474,26 @@ function spNext(n){spIndex=(spIndex+n+spSongs.length)%spSongs.length;spProgress=
  }
 
  try{
-   const existing=JSON.parse(localStorage.getItem('chats')||'{}');
-   if(localStorage.getItem(key)!=='ready'){
-     chats={'申惟':seed};
-     save('chats',chats);
-     localStorage.setItem(key,'ready');
-   }else{
-     chats={'申惟':Array.isArray(existing['申惟'])?existing['申惟']:seed};
-     if(migrateDirectorChats(chats['申惟']))save('chats',chats);
+   // save()/load() store chat data under sim_data_chats, not the old `chats` key.
+   // Never replace saved dialogue on Continue or when an updated HTML loads.
+   const stored=load('chats',{});
+   const existing=stored&&typeof stored==='object'&&!Array.isArray(stored)?stored:{};
+   const legacy=JSON.parse(localStorage.getItem('chats')||'{}');
+   if(!Array.isArray(existing['申惟'])){
+     existing['申惟']=Array.isArray(legacy['申惟'])&&legacy['申惟'].length?legacy['申惟']:seed;
+     save('chats',existing);
+   }else if(!existing['申惟'].length&&localStorage.getItem(key)!=='ready'){
+     existing['申惟']=seed;
+     save('chats',existing);
    }
- }catch(e){chats={'申惟':seed};}
+   chats=existing;
+   if(migrateDirectorChats(chats['申惟']))save('chats',chats);
+   localStorage.setItem(key,'ready');
+ }catch(e){
+   // Keep the in-memory conversation intact if storage is temporarily unavailable.
+   if(!chats||typeof chats!=='object')chats={};
+   if(!Array.isArray(chats['申惟']))chats['申惟']=seed;
+ }
  window.kktRows=function(){
    const q=(kktSearch||'').trim().toLowerCase();
    if(kktTab==='more')return '<div style="padding:22px;color:#888">更多功能</div>';
@@ -3711,7 +3752,7 @@ simRestoreShots();
   const b=bookingList().find(x=>x.id===id);if(!b)return;
   const history=sent();const recipients=history[id]||[];
   if(recipients.includes(recipient)||recipients.length>=Math.max(0,Number(b.people)-1)){close();notify('这张预约卡的邀请名额已用完');return}
-  const now=typeof window.getStoryTime==='function'?window.getStoryTime():new Date();
+  const now=(pending===id&&localStorage.getItem('dq_night_v1_next_day_started_at'))?new Date('2026-10-25T12:03:00'):(typeof window.getStoryTime==='function'?window.getStoryTime():new Date());
   const pad=n=>String(n).padStart(2,'0');
   const date=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
   const time=pad(now.getHours())+':'+pad(now.getMinutes());
@@ -3721,7 +3762,7 @@ simRestoreShots();
   history[id]=[...recipients,recipient];setSent(history);
   if(pending===id){localStorage.removeItem('dq_day25_invite_pending_v1');if(typeof window.dqDay25CardSent==='function')window.dqDay25CardSent(id,recipient)}
   document.getElementById('dq-day25-invite-prompt')?.remove();
-  close();renderKKT();notify('预约卡已发送给'+recipient);
+  close();document.querySelectorAll('.dq-attach-menu,.dq-attach-card-panel').forEach(el=>el.remove());renderKKT();notify('预约卡已发送给'+recipient);
  };
  const original=window.renderKKT;
  window.renderKKT=function(...args){
@@ -3843,7 +3884,18 @@ simRestoreShots();
   btn.onclick=()=>send();if(keyboardOpen&&step.kind==='me')keyboard();
  }
  const previousRender=window.renderKKT;
- window.renderKKT=function(...args){const result=previousRender.apply(this,args);decorate();return result};
+ window.renderKKT=function(...args){
+  if(app==='KKT'&&kktRoom==='申惟'&&Array.isArray(chats['申惟'])){
+   // Older scripted messages may lack date/time. Keep them on Oct 24,
+   // rather than sorting them after the Oct 25 invitation.
+   chats['申惟'].forEach(m=>{if(!m.date)m.date='2026-10-24';if(m.bookingCardId&&m.date==='2026-10-25')m.time='12:03'});
+   chats['申惟'].sort((a,b)=>String(a.date||'2026-10-24').localeCompare(String(b.date||'2026-10-24'))||String(a.time||'00:00').localeCompare(String(b.time||'00:00')));
+   save('chats',chats);
+  }
+  const result=previousRender.apply(this,args);decorate();
+  const sc=document.getElementById('kkt-scroll');if(sc)sc.scrollTop=sc.scrollHeight;
+  return result;
+ };
  const previousSend=window.kktSend;
  window.kktSend=function(...args){if(app==='KKT'&&kktRoom==='申惟'&&active())return send();return previousSend.apply(this,args)};
  // Existing October 24 input handler must not disable the new October 25 dialogue.
